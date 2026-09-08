@@ -2,3 +2,4 @@
 .swiftpm/
 dist/
 .DS_Store
+.cursor/hooks/state/
