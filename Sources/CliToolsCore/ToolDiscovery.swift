@@ -93,6 +93,7 @@ public struct ToolDiscovery: Sendable {
             path: entry.path,
             resolvedPath: resolved.path,
             source: source(for: entry, resolved: resolved),
+            installedAt: installationDate(for: entry, resolved: resolved),
             firstSeenAt: date,
             lastSeenAt: date
           )
@@ -106,6 +107,7 @@ public struct ToolDiscovery: Sendable {
         package: package,
         entries: entries,
         source: .homebrew,
+        installedAt: homebrew.installedAt[package],
         date: date
       )
     })
@@ -287,6 +289,7 @@ public struct ToolDiscovery: Sendable {
     package: String,
     entries: [URL],
     source: ToolSource,
+    installedAt: Date? = nil,
     date: Date
   ) -> CLITool {
     let sortedEntries = entries.sorted { $0.lastPathComponent < $1.lastPathComponent }
@@ -310,6 +313,10 @@ public struct ToolDiscovery: Sendable {
       source: source,
       packageName: package,
       commands: commands,
+      installedAt: installedAt ?? installationDate(
+        for: primary,
+        resolved: primary.resolvingSymlinksInPath()
+      ),
       firstSeenAt: date,
       lastSeenAt: date
     )
@@ -325,27 +332,48 @@ public struct ToolDiscovery: Sendable {
     }
   }
 
-  private func homebrewInventory() -> (formulae: Set<String>, casks: Set<String>) {
+  private func homebrewInventory() -> HomebrewInventory {
     guard includePackageManagers else {
-      return ([], [])
+      return HomebrewInventory()
     }
 
     guard let brew = ["/opt/homebrew/bin/brew", "/usr/local/bin/brew"]
       .first(where: FileManager.default.isExecutableFile)
     else {
-      return ([], [])
+      return HomebrewInventory()
     }
 
-    let formulae = commandOutput(
+    let output = commandOutput(
       executable: brew,
-      arguments: ["leaves", "--installed-on-request"]
+      arguments: ["info", "--json=v2", "--installed"]
     )
-    let casks = commandOutput(executable: brew, arguments: ["list", "--cask"])
+    guard
+      let data = output.data(using: .utf8),
+      let info = try? JSONDecoder().decode(HomebrewInfo.self, from: data)
+    else {
+      return HomebrewInventory()
+    }
 
-    return (
-      Set(formulae.split(whereSeparator: \.isNewline).map(String.init)),
-      Set(casks.split(whereSeparator: \.isNewline).map(String.init))
-    )
+    var inventory = HomebrewInventory()
+
+    for formula in info.formulae {
+      let requestedInstallations = formula.installed.filter(\.installedOnRequest)
+      guard !requestedInstallations.isEmpty else { continue }
+      inventory.formulae.insert(formula.fullName)
+
+      if let timestamp = requestedInstallations.compactMap(\.time).max() {
+        inventory.installedAt[formula.fullName] = Date(timeIntervalSince1970: timestamp)
+      }
+    }
+
+    for cask in info.casks {
+      inventory.casks.insert(cask.token)
+      if let timestamp = cask.installedTime {
+        inventory.installedAt[cask.token] = Date(timeIntervalSince1970: timestamp)
+      }
+    }
+
+    return inventory
   }
 
   private func cargoInventory() -> [String: String] {
@@ -379,9 +407,32 @@ public struct ToolDiscovery: Sendable {
       .description
   }
 
+  private func installationDate(for url: URL, resolved: URL) -> Date? {
+    let keys: Set<URLResourceKey> = [.creationDateKey, .contentModificationDateKey]
+    let resolvedValues = try? resolved.resourceValues(forKeys: keys)
+    let linkValues = try? url.resourceValues(forKeys: keys)
+
+    return resolvedValues?.creationDate
+      ?? linkValues?.creationDate
+      ?? resolvedValues?.contentModificationDate
+      ?? linkValues?.contentModificationDate
+  }
+
   private func commandOutput(executable: String, arguments: [String]) -> String {
+    let outputURL = FileManager.default.temporaryDirectory
+      .appending(path: "clitools-inventory-\(UUID().uuidString).json")
+    _ = FileManager.default.createFile(atPath: outputURL.path, contents: nil)
+
+    guard let output = try? FileHandle(forWritingTo: outputURL) else {
+      return ""
+    }
+
+    defer {
+      try? output.close()
+      try? FileManager.default.removeItem(at: outputURL)
+    }
+
     let process = Process()
-    let output = Pipe()
     process.executableURL = URL(fileURLWithPath: executable)
     process.arguments = arguments
     process.environment = environment
@@ -391,10 +442,52 @@ public struct ToolDiscovery: Sendable {
     do {
       try process.run()
       process.waitUntilExit()
-      let data = try output.fileHandleForReading.readToEnd() ?? Data()
+      try output.synchronize()
+      let data = try Data(contentsOf: outputURL)
       return String(decoding: data, as: UTF8.self)
     } catch {
       return ""
+    }
+  }
+}
+
+private struct HomebrewInventory {
+  var formulae = Set<String>()
+  var casks = Set<String>()
+  var installedAt: [String: Date] = [:]
+}
+
+private struct HomebrewInfo: Decodable {
+  let formulae: [Formula]
+  let casks: [Cask]
+
+  struct Formula: Decodable {
+    let fullName: String
+    let installed: [Installation]
+
+    enum CodingKeys: String, CodingKey {
+      case fullName = "full_name"
+      case installed
+    }
+  }
+
+  struct Installation: Decodable {
+    let time: TimeInterval?
+    let installedOnRequest: Bool
+
+    enum CodingKeys: String, CodingKey {
+      case time
+      case installedOnRequest = "installed_on_request"
+    }
+  }
+
+  struct Cask: Decodable {
+    let token: String
+    let installedTime: TimeInterval?
+
+    enum CodingKeys: String, CodingKey {
+      case token
+      case installedTime = "installed_time"
     }
   }
 }

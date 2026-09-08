@@ -35,6 +35,7 @@ public struct CLITool: Codable, Identifiable, Hashable, Sendable {
   public var homepage: URL?
   public var packageName: String?
   public var commands: [String]?
+  public var installedAt: Date?
   public var firstSeenAt: Date
   public var lastSeenAt: Date
 
@@ -53,6 +54,7 @@ public struct CLITool: Codable, Identifiable, Hashable, Sendable {
     homepage: URL? = nil,
     packageName: String? = nil,
     commands: [String]? = nil,
+    installedAt: Date? = nil,
     firstSeenAt: Date = .now,
     lastSeenAt: Date = .now
   ) {
@@ -70,6 +72,7 @@ public struct CLITool: Codable, Identifiable, Hashable, Sendable {
     self.homepage = homepage
     self.packageName = packageName
     self.commands = commands
+    self.installedAt = installedAt
     self.firstSeenAt = firstSeenAt
     self.lastSeenAt = lastSeenAt
   }

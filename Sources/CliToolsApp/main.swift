@@ -31,6 +31,9 @@ struct CliToolsDesktopApp: App {
 
 private enum CatalogSection: String, CaseIterable, Identifiable {
   case all = "All Tools"
+  case today = "Installed Today"
+  case lastSevenDays = "Last 7 Days"
+  case thisMonth = "This Month"
   case favorites = "Favorites"
   case archived = "Archive"
   case unavailable = "Unavailable"
@@ -40,6 +43,9 @@ private enum CatalogSection: String, CaseIterable, Identifiable {
   var icon: String {
     switch self {
     case .all: "terminal"
+    case .today: "calendar.badge.clock"
+    case .lastSevenDays: "calendar"
+    case .thisMonth: "calendar.circle"
     case .favorites: "star"
     case .archived: "archivebox"
     case .unavailable: "questionmark.folder"
@@ -66,13 +72,6 @@ private final class CatalogViewModel {
 
   var visibleTools: [CLITool] {
     catalog.tools.filter { tool in
-      let belongsToSection = switch section {
-      case .all: !tool.isArchived && tool.isAvailable
-      case .favorites: tool.isFavorite && !tool.isArchived && tool.isAvailable
-      case .archived: tool.isArchived
-      case .unavailable: !tool.isAvailable
-      }
-
       let matchesSearch = search.isEmpty
         || tool.name.localizedCaseInsensitiveContains(search)
         || tool.source.label.localizedCaseInsensitiveContains(search)
@@ -80,12 +79,55 @@ private final class CatalogViewModel {
           $0.localizedCaseInsensitiveContains(search)
         }
 
-      return belongsToSection && matchesSearch
+      return belongs(tool, to: section) && matchesSearch
     }
   }
 
   var selectedTool: CLITool? {
     catalog.tools.first { $0.id == selection }
+  }
+
+  func count(for section: CatalogSection) -> Int {
+    catalog.tools.count { belongs($0, to: section) }
+  }
+
+  private func belongs(_ tool: CLITool, to section: CatalogSection) -> Bool {
+    let isActive = !tool.isArchived && tool.isAvailable
+    let calendar = Calendar.current
+
+    switch section {
+    case .all:
+      return isActive
+    case .today:
+      guard let installedAt = tool.installedAt else { return false }
+      return isActive && calendar.isDateInToday(installedAt)
+    case .lastSevenDays:
+      guard
+        let installedAt = tool.installedAt,
+        let start = calendar.date(
+          byAdding: .day,
+          value: -6,
+          to: calendar.startOfDay(for: .now)
+        )
+      else {
+        return false
+      }
+      return isActive && installedAt >= start && installedAt <= .now
+    case .thisMonth:
+      guard
+        let installedAt = tool.installedAt,
+        let interval = calendar.dateInterval(of: .month, for: .now)
+      else {
+        return false
+      }
+      return isActive && interval.contains(installedAt)
+    case .favorites:
+      return tool.isFavorite && isActive
+    case .archived:
+      return tool.isArchived
+    case .unavailable:
+      return !tool.isAvailable
+    }
   }
 
   func refresh() async {
@@ -149,8 +191,13 @@ private struct CatalogView: View {
 
     NavigationSplitView {
       List(CatalogSection.allCases, selection: $model.section) { section in
-        Label(section.rawValue, systemImage: section.icon)
-          .tag(section)
+        HStack {
+          Label(section.rawValue, systemImage: section.icon)
+          Spacer()
+          Text(model.count(for: section), format: .number)
+            .foregroundStyle(.secondary)
+        }
+        .tag(section)
       }
       .navigationTitle("CLI Tools")
     } content: {
@@ -363,6 +410,9 @@ private struct ToolDetail: View {
         }
 
         GroupBox("Discovery") {
+          if let installedAt = tool.installedAt {
+            LabeledContent("Installed", value: installedAt.formatted())
+          }
           LabeledContent("First seen", value: tool.firstSeenAt.formatted())
           LabeledContent("Last seen", value: tool.lastSeenAt.formatted())
         }

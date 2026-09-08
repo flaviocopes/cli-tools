@@ -28,6 +28,7 @@ struct ToolDiscoveryTests {
 
     #expect(tool.path.hasSuffix("/bin/valley-tool"))
     #expect(tool.source == .path)
+    #expect(tool.installedAt != nil)
   }
 
   @Test

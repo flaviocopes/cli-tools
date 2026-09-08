@@ -70,6 +70,7 @@ public actor CatalogRepository {
       existing.source = tool.source
       existing.packageName = tool.packageName
       existing.commands = tool.commands
+      existing.installedAt = tool.installedAt
       existing.isAvailable = true
       existing.lastSeenAt = date
       return existing
