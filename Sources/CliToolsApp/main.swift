@@ -15,7 +15,7 @@ struct CliToolsDesktopApp: App {
           await model.refresh()
 
           while !Task.isCancelled {
-            try? await Task.sleep(for: .seconds(60))
+            try? await Task.sleep(for: .seconds(300))
             await model.refresh()
           }
         }
@@ -76,6 +76,9 @@ private final class CatalogViewModel {
       let matchesSearch = search.isEmpty
         || tool.name.localizedCaseInsensitiveContains(search)
         || tool.source.label.localizedCaseInsensitiveContains(search)
+        || tool.commandNames.contains {
+          $0.localizedCaseInsensitiveContains(search)
+        }
 
       return belongsToSection && matchesSearch
     }
@@ -232,6 +235,12 @@ private struct ToolRow: View {
         Text(tool.source.label)
           .font(.caption)
           .foregroundStyle(.secondary)
+
+        if tool.commandNames.count > 1 {
+          Text("\(tool.commandNames.count) commands")
+            .font(.caption2)
+            .foregroundStyle(.tertiary)
+        }
       }
 
       Spacer()
@@ -304,10 +313,22 @@ private struct ToolDetail: View {
         }
 
         GroupBox("Location") {
+          if let packageName = tool.packageName {
+            LabeledContent("Package", value: packageName)
+          }
           LabeledContent("Command", value: tool.name)
           LabeledContent("Path", value: tool.path)
           LabeledContent("Resolved path", value: tool.resolvedPath)
           LabeledContent("Available", value: tool.isAvailable ? "Yes" : "No")
+        }
+
+        if tool.commandNames.count > 1 {
+          GroupBox("Commands") {
+            Text(tool.commandNames.joined(separator: ", "))
+              .font(.system(.body, design: .monospaced))
+              .textSelection(.enabled)
+              .frame(maxWidth: .infinity, alignment: .leading)
+          }
         }
 
         if let summary = tool.summary {

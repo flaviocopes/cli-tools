@@ -52,7 +52,15 @@ public actor CatalogRepository {
     var existingByID = Dictionary(uniqueKeysWithValues: catalog.tools.map { ($0.id, $0) })
 
     catalog.tools = discovered.map { tool in
-      guard var existing = existingByID.removeValue(forKey: tool.id) else {
+      var previous = existingByID.removeValue(forKey: tool.id)
+
+      if previous == nil, let previousID = existingByID.first(where: {
+        $0.value.name == tool.name && $0.value.source == tool.source
+      })?.key {
+        previous = existingByID.removeValue(forKey: previousID)
+      }
+
+      guard var existing = previous else {
         return tool
       }
 
@@ -60,12 +68,14 @@ public actor CatalogRepository {
       existing.path = tool.path
       existing.resolvedPath = tool.resolvedPath
       existing.source = tool.source
+      existing.packageName = tool.packageName
+      existing.commands = tool.commands
       existing.isAvailable = true
       existing.lastSeenAt = date
       return existing
     }
 
-    for var missing in existingByID.values {
+    for var missing in existingByID.values where missing.isFavorite || missing.isArchived {
       missing.isAvailable = false
       catalog.tools.append(missing)
     }

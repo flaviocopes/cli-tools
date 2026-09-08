@@ -2,7 +2,7 @@
 
 CLI Tools gives you one catalog for every command-line tool on your Mac.
 
-The native app scans your `PATH` and common package-manager directories. You can search, favorite, archive, and inspect each tool.
+The native app finds packages you explicitly installed with Homebrew and Cargo. It also scans trusted user command directories. Package commands stay grouped, so one Homebrew formula does not flood the catalog with helper executables.
 
 The companion CLI reads the same catalog. AI agents can use its JSON output to discover the tools available on your system.
 
