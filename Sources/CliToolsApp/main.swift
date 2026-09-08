@@ -84,7 +84,7 @@ private final class CatalogViewModel {
   }
 
   var selectedTool: CLITool? {
-    catalog.tools.first { $0.id == selection }
+    visibleTools.first { $0.id == selection }
   }
 
   func count(for section: CatalogSection) -> Int {
