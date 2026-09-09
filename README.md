@@ -95,6 +95,8 @@ swift test
 
 Issues and pull requests are welcome. Run `swift test` before opening a PR.
 
+Working with an AI coding agent? Point it at [AGENTS.md](AGENTS.md). It has the build commands, the project layout, and the rules to follow.
+
 ## License
 
 [MIT](LICENSE)
