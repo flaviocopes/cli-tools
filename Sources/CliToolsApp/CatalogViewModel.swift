@@ -67,6 +67,7 @@ final class CatalogViewModel {
   var isScanning = false
   var inspectingToolIDs: Set<CLITool.ID> = []
   var errorMessage: String?
+  var history: ShellHistory?
 
   @ObservationIgnored
   private let repository = CatalogRepository()
@@ -166,6 +167,17 @@ final class CatalogViewModel {
     } catch {
       errorMessage = error.localizedDescription
     }
+
+    history = await Task.detached(priority: .utility) {
+      ShellHistory.load()
+    }.value
+  }
+
+  func usage(of tool: CLITool) async -> [CommandUsage] {
+    guard let history else { return [] }
+    return await Task.detached(priority: .userInitiated) {
+      history.usage(of: tool)
+    }.value
   }
 
   func toggleFavorite(_ tool: CLITool) async {

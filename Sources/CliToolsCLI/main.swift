@@ -89,6 +89,34 @@ struct CliToolsCommand {
         printInspection(inspectedTool)
       }
 
+    case "history":
+      let value = try identifier(in: options)
+      var catalog = try await repository.load()
+      if catalog.lastScanAt == nil {
+        catalog = try await repository.refresh()
+      }
+
+      let matches = catalog.tools.filter { $0.id == value || $0.name == value }
+      guard let tool = matches.first, matches.count == 1 else {
+        if matches.isEmpty {
+          throw CatalogError.toolNotFound(value)
+        }
+        throw CatalogError.ambiguousToolName(value)
+      }
+
+      let usage = ShellHistory.load().usage(of: tool)
+      if options.contains("--json") {
+        try printJSON(usage)
+      } else if usage.isEmpty {
+        print("No runs of \(tool.name) found in your shell history.")
+      } else {
+        for item in usage {
+          let count = "×\(item.count)".padding(toLength: 6, withPad: " ", startingAt: 0)
+          let date = item.lastUsed?.formatted(date: .abbreviated, time: .omitted) ?? "unknown date"
+          print("\(count) \(date.padding(toLength: 14, withPad: " ", startingAt: 0)) \(item.command)")
+        }
+      }
+
     case "catalog-path":
       print(await repository.fileURL.path)
 
@@ -195,6 +223,7 @@ struct CliToolsCommand {
         clitools archive <name-or-id>
         clitools restore <name-or-id>
         clitools inspect <name-or-id> [--json]
+        clitools history <name-or-id> [--json]
         clitools catalog-path
       """
     )

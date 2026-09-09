@@ -6,6 +6,12 @@ struct ToolDetailView: View {
   let tool: CLITool
 
   @State private var copied = false
+  @State private var usage: [CommandUsage] = []
+  @State private var showAllUsage = false
+
+  private var historyKey: String {
+    "\(tool.id)|\(model.history?.loadedAt.timeIntervalSince1970 ?? 0)"
+  }
 
   var body: some View {
     ScrollView {
@@ -47,6 +53,7 @@ struct ToolDetailView: View {
           }
         }
 
+        yourHistory
         examples
 
         if tool.commandNames.count > 1 {
@@ -55,9 +62,9 @@ struct ToolDetailView: View {
           }
         }
 
-        usage
+        helpSection
 
-        DetailSection("History") {
+        DetailSection("Timeline") {
           Card {
             VStack(spacing: 8) {
               if let installedAt = tool.installedAt {
@@ -71,6 +78,10 @@ struct ToolDetailView: View {
       }
       .padding(20)
       .frame(maxWidth: .infinity, alignment: .leading)
+    }
+    .task(id: historyKey) {
+      showAllUsage = false
+      usage = await model.usage(of: tool)
     }
     .task(id: tool.id) {
       await model.inspect(tool)
@@ -158,6 +169,40 @@ struct ToolDetailView: View {
   }
 
   @ViewBuilder
+  private var yourHistory: some View {
+    let visible = showAllUsage ? usage : Array(usage.prefix(8))
+    let runs = usage.reduce(0) { $0 + $1.count }
+
+    DetailSection("Your History") {
+      if usage.isEmpty {
+        Card {
+          Text(model.history == nil ? "Reading your shell history…" : "No runs found in your shell history.")
+            .font(.callout)
+            .foregroundStyle(.secondary)
+        }
+      } else {
+        VStack(alignment: .leading, spacing: 8) {
+          Text("^[\(runs) run](inflect: true) · ^[\(usage.count) distinct command](inflect: true)")
+            .font(.caption)
+            .foregroundStyle(.secondary)
+
+          ForEach(visible) { item in
+            UsageCard(usage: item)
+          }
+
+          if usage.count > 8 {
+            Button(showAllUsage ? "Show fewer" : "Show all \(usage.count)") {
+              showAllUsage.toggle()
+            }
+            .buttonStyle(.link)
+            .font(.callout)
+          }
+        }
+      }
+    }
+  }
+
+  @ViewBuilder
   private var examples: some View {
     if let examples = tool.examples, !examples.isEmpty {
       DetailSection("Examples") {
@@ -182,7 +227,7 @@ struct ToolDetailView: View {
   }
 
   @ViewBuilder
-  private var usage: some View {
+  private var helpSection: some View {
     if let help = tool.help, !help.isEmpty {
       DetailSection("Help") {
         CodeBlock(text: help)
@@ -233,6 +278,39 @@ private struct ActionTile: View {
     .buttonStyle(.plain)
     .onHover { isHovering = $0 }
     .animation(.easeOut(duration: 0.12), value: isHovering)
+  }
+}
+
+private struct UsageCard: View {
+  let usage: CommandUsage
+
+  var body: some View {
+    Card {
+      HStack(alignment: .top, spacing: 10) {
+        VStack(alignment: .leading, spacing: 5) {
+          Text(usage.command)
+            .font(.system(size: 12.5, design: .monospaced))
+            .textSelection(.enabled)
+            .lineLimit(4)
+
+          HStack(spacing: 6) {
+            Text("×\(usage.count)")
+              .fontWeight(.semibold)
+              .monospacedDigit()
+
+            if let lastUsed = usage.lastUsed {
+              Text("·")
+              Text(lastUsed, format: .relative(presentation: .named))
+            }
+          }
+          .font(.caption)
+          .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+
+        CopyButton(text: usage.command)
+      }
+    }
   }
 }
 
