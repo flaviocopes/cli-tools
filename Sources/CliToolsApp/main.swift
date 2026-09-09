@@ -61,7 +61,7 @@ private final class CatalogViewModel {
   var section = CatalogSection.all
   var search = ""
   var isScanning = false
-  var inspectingToolID: CLITool.ID?
+  var inspectingToolIDs: Set<CLITool.ID> = []
   var errorMessage: String?
 
   @ObservationIgnored
@@ -163,9 +163,8 @@ private final class CatalogViewModel {
   }
 
   func inspect(_ tool: CLITool) async {
-    guard inspectingToolID == nil else { return }
-    inspectingToolID = tool.id
-    defer { inspectingToolID = nil }
+    guard inspectingToolIDs.insert(tool.id).inserted else { return }
+    defer { inspectingToolIDs.remove(tool.id) }
 
     let inspection = await inspector.inspect(tool)
 
@@ -329,19 +328,6 @@ private struct ToolDetail: View {
         }
 
         HStack {
-          Button {
-            Task { await model.inspect(tool) }
-          } label: {
-            if model.inspectingToolID == tool.id {
-              ProgressView()
-                .controlSize(.small)
-            } else {
-              Text(tool.help == nil ? "Load Usage" : "Refresh Usage")
-            }
-          }
-          .buttonStyle(.borderedProminent)
-          .disabled(model.inspectingToolID != nil)
-
           Button(tool.isFavorite ? "Favorited" : "Favorite") {
             Task { await model.toggleFavorite(tool) }
           }
@@ -407,6 +393,16 @@ private struct ToolDetail: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
           }
+        } else if model.inspectingToolIDs.contains(tool.id) {
+          GroupBox("Usage") {
+            HStack {
+              ProgressView()
+                .controlSize(.small)
+              Text("Loading usage…")
+                .foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+          }
         }
 
         GroupBox("Discovery") {
@@ -421,5 +417,14 @@ private struct ToolDetail: View {
       .frame(maxWidth: 720, alignment: .leading)
     }
     .navigationTitle(tool.name)
+    .task(id: tool.id) {
+      await model.inspect(tool)
+
+      while !Task.isCancelled {
+        try? await Task.sleep(for: .seconds(300))
+        guard !Task.isCancelled else { return }
+        await model.inspect(tool)
+      }
+    }
   }
 }
