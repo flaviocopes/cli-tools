@@ -346,33 +346,64 @@ public struct ToolDiscovery: Sendable {
       return HomebrewInventory()
     }
 
+    let prefix = URL(fileURLWithPath: brew)
+      .deletingLastPathComponent()
+      .deletingLastPathComponent()
+    var inventory = homebrewFormulaInventory(prefix: prefix)
     let output = commandOutput(
       executable: brew,
       arguments: ["info", "--json=v2", "--installed"]
     )
+
     guard
       let data = output.data(using: .utf8),
       let info = try? JSONDecoder().decode(HomebrewInfo.self, from: data)
     else {
-      return HomebrewInventory()
-    }
-
-    var inventory = HomebrewInventory()
-
-    for formula in info.formulae {
-      let requestedInstallations = formula.installed.filter(\.installedOnRequest)
-      guard !requestedInstallations.isEmpty else { continue }
-      inventory.formulae.insert(formula.fullName)
-
-      if let timestamp = requestedInstallations.compactMap(\.time).max() {
-        inventory.installedAt[formula.fullName] = Date(timeIntervalSince1970: timestamp)
-      }
+      return inventory
     }
 
     for cask in info.casks {
       inventory.casks.insert(cask.token)
       if let timestamp = cask.installedTime {
         inventory.installedAt[cask.token] = Date(timeIntervalSince1970: timestamp)
+      }
+    }
+
+    return inventory
+  }
+
+  private func homebrewFormulaInventory(prefix: URL) -> HomebrewInventory {
+    let cellar = prefix.appending(path: "Cellar", directoryHint: .isDirectory)
+    var inventory = HomebrewInventory()
+
+    for formulaDirectory in contentsOfDirectories(in: cellar) {
+      for versionDirectory in contentsOfDirectories(in: formulaDirectory) {
+        let receiptURL = versionDirectory.appending(path: "INSTALL_RECEIPT.json")
+        guard
+          let data = try? Data(contentsOf: receiptURL),
+          let receipt = try? JSONDecoder().decode(HomebrewReceipt.self, from: data),
+          receipt.installedOnRequest
+        else {
+          continue
+        }
+
+        let formula = formulaDirectory.lastPathComponent
+        let tap = receipt.source?.tap
+        let package = if let tap, tap != "homebrew/core" {
+          "\(tap)/\(formula)"
+        } else {
+          formula
+        }
+
+        inventory.formulae.insert(package)
+
+        if let timestamp = receipt.time {
+          let installedAt = Date(timeIntervalSince1970: timestamp)
+          inventory.installedAt[package] = max(
+            inventory.installedAt[package] ?? .distantPast,
+            installedAt
+          )
+        }
       }
     }
 
@@ -608,6 +639,22 @@ private struct HomebrewInfo: Decodable {
       case token
       case installedTime = "installed_time"
     }
+  }
+}
+
+private struct HomebrewReceipt: Decodable {
+  let installedOnRequest: Bool
+  let time: TimeInterval?
+  let source: Source?
+
+  enum CodingKeys: String, CodingKey {
+    case installedOnRequest = "installed_on_request"
+    case time
+    case source
+  }
+
+  struct Source: Decodable {
+    let tap: String?
   }
 }
 
