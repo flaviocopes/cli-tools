@@ -105,13 +105,16 @@ public actor CatalogRepository {
     version: String?,
     help: String?,
     summary: String? = nil,
-    homepage: URL? = nil
+    homepage: URL? = nil,
+    examples: [ToolExample]? = nil
   ) throws -> Catalog {
     try update(identifier) {
-      $0.version = version ?? $0.version
+      let previous = $0.version.flatMap { ToolInspector.isPlausibleVersion($0) ? $0 : nil }
+      $0.version = version ?? previous
       $0.help = help ?? $0.help
       $0.summary = summary ?? $0.summary
       $0.homepage = homepage ?? $0.homepage
+      $0.examples = examples ?? $0.examples
     }
   }
 

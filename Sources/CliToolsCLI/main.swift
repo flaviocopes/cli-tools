@@ -78,7 +78,8 @@ struct CliToolsCommand {
         version: inspection.version,
         help: inspection.help,
         summary: inspection.summary,
-        homepage: inspection.homepage
+        homepage: inspection.homepage,
+        examples: inspection.examples
       )
       let inspectedTool = updated.tools.first { $0.id == tool.id }
 
@@ -165,6 +166,16 @@ struct CliToolsCommand {
       print("Homepage: \(homepage.absoluteString)")
     }
     print("Path: \(tool.path)")
+
+    if let examples = tool.examples, !examples.isEmpty {
+      print("\nExamples:")
+      for example in examples {
+        if !example.description.isEmpty {
+          print("  \(example.description)")
+        }
+        print("    \(example.command)")
+      }
+    }
 
     if let help = tool.help {
       print("\n\(help)")

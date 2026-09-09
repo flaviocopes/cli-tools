@@ -20,6 +20,16 @@ public enum ToolSource: String, Codable, CaseIterable, Sendable {
   }
 }
 
+public struct ToolExample: Codable, Hashable, Sendable {
+  public var description: String
+  public var command: String
+
+  public init(description: String, command: String) {
+    self.description = description
+    self.command = command
+  }
+}
+
 public struct CLITool: Codable, Identifiable, Hashable, Sendable {
   public let id: String
   public var name: String
@@ -32,6 +42,7 @@ public struct CLITool: Codable, Identifiable, Hashable, Sendable {
   public var summary: String?
   public var version: String?
   public var help: String?
+  public var examples: [ToolExample]?
   public var homepage: URL?
   public var packageName: String?
   public var commands: [String]?
@@ -51,6 +62,7 @@ public struct CLITool: Codable, Identifiable, Hashable, Sendable {
     summary: String? = nil,
     version: String? = nil,
     help: String? = nil,
+    examples: [ToolExample]? = nil,
     homepage: URL? = nil,
     packageName: String? = nil,
     commands: [String]? = nil,
@@ -69,6 +81,7 @@ public struct CLITool: Codable, Identifiable, Hashable, Sendable {
     self.summary = summary
     self.version = version
     self.help = help
+    self.examples = examples
     self.homepage = homepage
     self.packageName = packageName
     self.commands = commands

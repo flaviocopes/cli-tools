@@ -47,6 +47,8 @@ struct ToolDetailView: View {
           }
         }
 
+        examples
+
         if tool.commandNames.count > 1 {
           DetailSection("Commands") {
             CodeBlock(text: tool.commandNames.joined(separator: "\n"))
@@ -156,13 +158,37 @@ struct ToolDetailView: View {
   }
 
   @ViewBuilder
+  private var examples: some View {
+    if let examples = tool.examples, !examples.isEmpty {
+      DetailSection("Examples") {
+        VStack(spacing: 8) {
+          ForEach(examples, id: \.self) { example in
+            ExampleCard(example: example)
+          }
+        }
+      }
+    } else if model.inspectingToolIDs.contains(tool.id) {
+      DetailSection("Examples") {
+        Card {
+          HStack(spacing: 8) {
+            ProgressView()
+              .controlSize(.small)
+            Text("Looking for examples…")
+              .foregroundStyle(.secondary)
+          }
+        }
+      }
+    }
+  }
+
+  @ViewBuilder
   private var usage: some View {
     if let help = tool.help, !help.isEmpty {
-      DetailSection("Usage") {
+      DetailSection("Help") {
         CodeBlock(text: help)
       }
     } else if model.inspectingToolIDs.contains(tool.id) {
-      DetailSection("Usage") {
+      DetailSection("Help") {
         Card {
           HStack(spacing: 8) {
             ProgressView()
@@ -207,6 +233,31 @@ private struct ActionTile: View {
     .buttonStyle(.plain)
     .onHover { isHovering = $0 }
     .animation(.easeOut(duration: 0.12), value: isHovering)
+  }
+}
+
+private struct ExampleCard: View {
+  let example: ToolExample
+
+  var body: some View {
+    Card {
+      VStack(alignment: .leading, spacing: 8) {
+        if !example.description.isEmpty {
+          Text(example.description)
+            .font(.callout)
+            .foregroundStyle(.secondary)
+        }
+
+        HStack(alignment: .top, spacing: 10) {
+          Text(example.command)
+            .font(.system(size: 12.5, design: .monospaced))
+            .textSelection(.enabled)
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+          CopyButton(text: example.command)
+        }
+      }
+    }
   }
 }
 
@@ -280,7 +331,7 @@ private struct CodeBlock: View {
   var body: some View {
     ScrollView(.horizontal) {
       Text(text)
-        .font(.system(.caption, design: .monospaced))
+        .font(.system(size: 12, design: .monospaced))
         .textSelection(.enabled)
         .padding(12)
     }

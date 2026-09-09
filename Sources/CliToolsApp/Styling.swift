@@ -77,6 +77,35 @@ struct SourceBadge: View {
   }
 }
 
+struct CopyButton: View {
+  let text: String
+
+  @State private var copied = false
+
+  var body: some View {
+    Button {
+      NSPasteboard.general.clearContents()
+      NSPasteboard.general.setString(text, forType: .string)
+      copied = true
+      Task {
+        try? await Task.sleep(for: .seconds(1.5))
+        copied = false
+      }
+    } label: {
+      Image(systemName: copied ? "checkmark" : "doc.on.doc")
+        .font(.system(size: 11, weight: .semibold))
+        .foregroundStyle(copied ? AnyShapeStyle(.green) : AnyShapeStyle(.secondary))
+        .frame(width: 22, height: 22)
+        .background(
+          RoundedRectangle(cornerRadius: 6, style: .continuous)
+            .fill(.quaternary.opacity(0.6))
+        )
+    }
+    .buttonStyle(.plain)
+    .help("Copy")
+  }
+}
+
 struct Card<Content: View>: View {
   @ViewBuilder let content: Content
 

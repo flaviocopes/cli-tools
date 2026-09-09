@@ -10,7 +10,7 @@ struct CliToolsDesktopApp: App {
     WindowGroup("CLI Tools") {
       CatalogView()
         .environment(model)
-        .frame(minWidth: 760, minHeight: 480)
+        .frame(minWidth: 960, minHeight: 560)
         .task {
           await model.refresh()
 
@@ -20,7 +20,7 @@ struct CliToolsDesktopApp: App {
           }
         }
     }
-    .defaultSize(width: 1120, height: 720)
+    .defaultSize(width: 1360, height: 840)
     .windowToolbarStyle(.unified(showsTitle: false))
     .onChange(of: scenePhase) { _, phase in
       if phase == .active {
@@ -44,7 +44,7 @@ struct CatalogView: View {
         .inspector(isPresented: $model.isInspectorPresented) {
           if let tool = model.selectedTool {
             ToolDetailView(tool: tool)
-              .inspectorColumnWidth(min: 320, ideal: 380, max: 520)
+              .inspectorColumnWidth(min: 560, ideal: 700, max: 1100)
           }
         }
     }

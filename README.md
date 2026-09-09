@@ -56,6 +56,8 @@ swift run clitools inspect gh
 
 Inspection runs the selected tool with `--version` and `--help`. It only happens when you request it. Homebrew tools also receive their official description and homepage.
 
+Inspection also collects ready-made examples. It downloads the tool's [tldr page](https://github.com/tldr-pages/tldr) when one exists, and extracts the examples section from the tool's own help output. The app shows them with one-click copy, and the JSON output includes them under `examples`.
+
 ## Catalog location
 
 The app and CLI share this file:
