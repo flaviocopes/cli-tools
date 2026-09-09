@@ -41,45 +41,71 @@ Install the `clitools` command:
 ./Scripts/install-cli.sh
 ```
 
-This builds the release binary and symlinks it into `~/.local/bin`. Pass a different directory to install somewhere else, for example `./Scripts/install-cli.sh /opt/homebrew/bin`. After that, replace `swift run clitools` with `clitools` in the commands below.
+This builds the release binary and symlinks it into `~/.local/bin`. Pass a different directory to install somewhere else, for example `./Scripts/install-cli.sh /opt/homebrew/bin`. Without installing, run the same commands with `swift run clitools` instead of `clitools`.
 
 Scan your Mac:
 
 ```bash
-swift run clitools scan
+clitools scan
 ```
 
-List the active tools as JSON:
+The scan tells you how many tools it found per source, and which ones appeared or disappeared since the last scan.
+
+List what is installed:
 
 ```bash
-swift run clitools list --json
+clitools list
+clitools list --favorites
+clitools list --source homebrew
+clitools list --sort usage
+clitools list --unused
+clitools list --json
 ```
 
-Manage a tool:
+Every list shows the star, name, source, version, and description. `--sort usage` orders by how often you ran each tool, from your shell history. `--unused` shows tools that never appear in it, handy when cleaning up.
+
+Find a tool by name, command, package, or description:
 
 ```bash
-swift run clitools favorite gh
-swift run clitools archive vercel
-swift run clitools restore vercel
+clitools search markdown
 ```
 
-Load local usage details:
+Learn about a tool:
 
 ```bash
-swift run clitools inspect gh
+clitools show gh
+clitools inspect gh
+clitools examples gh
 ```
 
-Inspection runs the selected tool with `--version` and `--help`. It only happens when you request it. Homebrew tools also receive their official description and homepage.
+`show` prints what the catalog already knows. `inspect` runs the tool with `--version` and `--help`, and fetches its description, homepage, and examples. Homebrew tools get their official description. Examples come from the tool's [tldr page](https://github.com/tldr-pages/tldr) and from the examples section of its help output. Inspection only happens when you ask for it, never during a scan.
 
-Inspection also collects ready-made examples. It downloads the tool's [tldr page](https://github.com/tldr-pages/tldr) when one exists, and extracts the examples section from the tool's own help output. The app shows them with one-click copy, and the JSON output includes them under `examples`.
+Tools can be found by any of their commands. `clitools show psql` finds the PostgreSQL package. Typos get a "did you mean" hint.
+
+Manage tools, one or many at a time:
+
+```bash
+clitools favorite gh bat
+clitools archive vercel
+clitools restore vercel
+```
 
 See how you used a tool:
 
 ```bash
-swift run clitools history gh
+clitools history gh
+clitools history gh --limit 10
 ```
 
-This reads your shell history (zsh, bash, and fish) and groups the commands that ran the tool. The app shows the same list in the tool detail. Nothing from your history is written to the catalog.
+This reads your shell history (zsh, bash, and fish) and groups the commands that ran the tool. Nothing from your history is written to the catalog.
+
+Get a summary of the catalog:
+
+```bash
+clitools stats
+```
+
+Every command accepts `--help`, and most accept `--json`. Hints and footers only show up in a terminal, so piped output stays clean.
 
 ## Catalog location
 
@@ -92,7 +118,7 @@ The app and CLI share this file:
 Print its path from the CLI:
 
 ```bash
-swift run clitools catalog-path
+clitools catalog-path
 ```
 
 ## Run the tests

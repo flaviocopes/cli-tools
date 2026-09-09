@@ -1,15 +1,36 @@
 import Foundation
 
 public enum CatalogError: LocalizedError, Sendable {
-  case toolNotFound(String)
-  case ambiguousToolName(String)
+  case toolNotFound(String, suggestions: [CLITool])
+  case ambiguousToolName(String, candidates: [CLITool])
 
   public var errorDescription: String? {
     switch self {
-    case .toolNotFound(let value):
-      "No CLI tool matches '\(value)'."
-    case .ambiguousToolName(let value):
-      "More than one CLI tool matches '\(value)'. Use its full ID."
+    case .toolNotFound(let value, let suggestions):
+      var message = "No CLI tool matches '\(value)'."
+      if !suggestions.isEmpty {
+        message += " Did you mean: \(suggestions.map(\.name).joined(separator: ", "))?"
+      }
+      return message
+    case .ambiguousToolName(let value, let candidates):
+      let list = candidates
+        .map { "  \($0.id)  (\($0.source.label))" }
+        .joined(separator: "\n")
+      return "More than one CLI tool matches '\(value)'. Use one of these IDs:\n\(list)"
+    }
+  }
+}
+
+extension Catalog {
+  /// Like `lookup`, but throws a `CatalogError` when there is no single match.
+  public func tool(matching identifier: String) throws -> CLITool {
+    switch lookup(identifier) {
+    case .found(let tool):
+      return tool
+    case .ambiguous(let candidates):
+      throw CatalogError.ambiguousToolName(identifier, candidates: candidates)
+    case .notFound(let suggestions):
+      throw CatalogError.toolNotFound(identifier, suggestions: suggestions)
     }
   }
 }
@@ -47,9 +68,16 @@ public actor CatalogRepository {
 
   @discardableResult
   public func refresh(at date: Date = .now) throws -> Catalog {
+    try scan(at: date).catalog
+  }
+
+  /// Rescans the machine and reports which tools appeared or disappeared.
+  public func scan(at date: Date = .now) throws -> ScanSummary {
     var catalog = try load()
+    let hadScanned = catalog.lastScanAt != nil
     let discovered = discovery.scan(at: date)
     var existingByID = Dictionary(uniqueKeysWithValues: catalog.tools.map { ($0.id, $0) })
+    var added: [CLITool] = []
 
     catalog.tools = discovered.map { tool in
       var previous = existingByID.removeValue(forKey: tool.id)
@@ -61,6 +89,7 @@ public actor CatalogRepository {
       }
 
       guard var existing = previous else {
+        added.append(tool)
         return tool
       }
 
@@ -76,6 +105,10 @@ public actor CatalogRepository {
       return existing
     }
 
+    let removed = existingByID.values
+      .filter(\.isAvailable)
+      .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+
     for var missing in existingByID.values where missing.isFavorite || missing.isArchived {
       missing.isAvailable = false
       catalog.tools.append(missing)
@@ -86,7 +119,12 @@ public actor CatalogRepository {
     }
     catalog.lastScanAt = date
     try save(catalog)
-    return catalog
+
+    return ScanSummary(
+      catalog: catalog,
+      added: hadScanned ? added : [],
+      removed: removed
+    )
   }
 
   @discardableResult
@@ -123,16 +161,9 @@ public actor CatalogRepository {
     change: (inout CLITool) -> Void
   ) throws -> Catalog {
     var catalog = try load()
-    let matches = catalog.tools.indices.filter {
-      catalog.tools[$0].id == identifier || catalog.tools[$0].name == identifier
-    }
-
-    guard !matches.isEmpty else {
-      throw CatalogError.toolNotFound(identifier)
-    }
-
-    guard matches.count == 1, let index = matches.first else {
-      throw CatalogError.ambiguousToolName(identifier)
+    let tool = try catalog.tool(matching: identifier)
+    guard let index = catalog.tools.firstIndex(where: { $0.id == tool.id }) else {
+      throw CatalogError.toolNotFound(identifier, suggestions: [])
     }
 
     change(&catalog.tools[index])

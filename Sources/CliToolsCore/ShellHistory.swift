@@ -103,17 +103,40 @@ public struct ShellHistory: Sendable {
       }
   }
 
+  /// How many history entries ran each tool, keyed by tool ID.
+  /// One pass over the history, so it stays fast for large catalogs.
+  public func runCounts(for tools: [CLITool]) -> [String: Int] {
+    var toolIDs: [String: [String]] = [:]
+    for tool in tools {
+      for name in Set(tool.commandNames + [tool.name]) {
+        toolIDs[name, default: []].append(tool.id)
+      }
+    }
+
+    var counts: [String: Int] = [:]
+    for entry in entries {
+      var seen: Set<String> = []
+      for executable in Self.invokedExecutables(in: entry.command) {
+        for id in toolIDs[executable] ?? [] where seen.insert(id).inserted {
+          counts[id, default: 0] += 1
+        }
+      }
+    }
+
+    return counts
+  }
+
   public static func invokes(_ names: Set<String>, in command: String) -> Bool {
-    let segments = command
+    invokedExecutables(in: command).contains(where: names.contains)
+  }
+
+  static func invokedExecutables(in command: String) -> [String] {
+    command
       .replacingOccurrences(of: "&&", with: "|")
       .replacingOccurrences(of: "||", with: "|")
       .replacingOccurrences(of: ";", with: "|")
       .split(separator: "|")
-
-    return segments.contains { segment in
-      guard let executable = invokedExecutable(in: String(segment)) else { return false }
-      return names.contains(executable)
-    }
+      .compactMap { invokedExecutable(in: String($0)) }
   }
 
   private static let wrappers: Set<String> = [

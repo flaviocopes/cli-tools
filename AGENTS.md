@@ -3,7 +3,7 @@
 A Swift package with three targets. No Xcode project, no external dependencies.
 
 - `Sources/CliToolsCore`: discovery, catalog persistence, inspection, shell history. All logic lives here.
-- `Sources/CliToolsCLI`: the `clitools` command-line executable.
+- `Sources/CliToolsCLI`: the `clitools` command-line executable. `Commands.swift` declares every command and its options (the help text comes from there), `Arguments.swift` parses them, `Output.swift` renders tables and JSON, `CliToolsCommand.swift` dispatches. Adding a command means adding a `CommandSpec` plus a `case` in the dispatcher.
 - `Sources/CliToolsApp`: the SwiftUI macOS app.
 - `Tests/CliToolsCoreTests`: Swift Testing tests for the core.
 
@@ -30,6 +30,8 @@ Build output goes to `.build/`, the app bundle to `dist/`. Both are ignored by g
 - The app has no automated UI tests. Verify visual changes by running `./Scripts/build-app.sh` and opening the app.
 - Inspection runs tools with `--version` and `--help` and does network requests (Homebrew metadata, tldr pages). It only runs for a selected tool, never during a scan.
 - Never write shell history contents to the catalog.
+- Resolve tool names through `Catalog.tool(matching:)` / `lookup(_:)`. It matches IDs, names, command names, and package names, and produces the "did you mean" and ambiguity errors.
+- CLI hints and footers go through `Output.hint`, which prints only on a terminal. Keep piped and `--json` output free of them.
 
 ## Learned User Preferences
 - Keep the catalog focused on CLI tools the user explicitly installed; exclude operating-system tools and transitive package helpers.
