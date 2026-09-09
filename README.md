@@ -35,6 +35,8 @@ swift run CliToolsApp
 
 ## Use the CLI
 
+![The clitools help output listing every command](docs/cli.png)
+
 Install the `clitools` command:
 
 ```bash
