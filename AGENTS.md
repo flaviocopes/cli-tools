@@ -18,6 +18,7 @@ swift run clitools list  # run the CLI from source
 swift run CliToolsApp    # run the app from source
 ./Scripts/build-app.sh   # release build, produces dist/CLI Tools.app (ad-hoc signed)
 open "dist/CLI Tools.app"
+./Scripts/install-cli.sh # release build of clitools, symlinked into ~/.local/bin (or the dir passed as $1)
 ```
 
 Build output goes to `.build/`, the app bundle to `dist/`. Both are ignored by git.

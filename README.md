@@ -33,6 +33,14 @@ swift run CliToolsApp
 
 ## Use the CLI
 
+Install the `clitools` command:
+
+```bash
+./Scripts/install-cli.sh
+```
+
+This builds the release binary and symlinks it into `~/.local/bin`. Pass a different directory to install somewhere else, for example `./Scripts/install-cli.sh /opt/homebrew/bin`. After that, replace `swift run clitools` with `clitools` in the commands below.
+
 Scan your Mac:
 
 ```bash
