@@ -6,6 +6,11 @@ The native app finds packages you explicitly installed with Homebrew, npm, and C
 
 The companion CLI reads the same catalog. AI agents can use its JSON output to discover the tools available on your system.
 
+## Requirements
+
+- macOS 14 or later
+- Xcode 26 or a Swift 6.2 toolchain
+
 ## Run the app
 
 Build the macOS app bundle:
@@ -85,3 +90,11 @@ swift run clitools catalog-path
 ```bash
 swift test
 ```
+
+## Contributing
+
+Issues and pull requests are welcome. Run `swift test` before opening a PR.
+
+## License
+
+[MIT](LICENSE)
