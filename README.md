@@ -6,7 +6,7 @@ The native app finds packages you explicitly installed with Homebrew, npm, and C
 
 The companion CLI reads the same catalog. AI agents can use its JSON output to discover the tools available on your system.
 
-![CLI Tools showing the stripe tool with ready-made examples and its help output](docs/screenshot.png)
+![CLI Tools showing every command-line tool found on my Mac](docs/all-tools.png)
 
 ## Requirements
 
@@ -36,6 +36,8 @@ swift run CliToolsApp
 ## See who runs your tools
 
 Select a tool and the detail pane shows two kinds of history.
+
+![CLI Tools showing my shell history and the agent history for amp](docs/tool-history.png)
 
 **Your History** comes from your shell history (zsh, bash, and fish). It loads with the catalog and groups the commands that ran the tool, most recent first, with a run count and the last time you used it.
 
