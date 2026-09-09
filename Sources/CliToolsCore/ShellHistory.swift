@@ -3,10 +3,13 @@ import Foundation
 public struct HistoryEntry: Hashable, Sendable {
   public var command: String
   public var date: Date?
+  /// Set when an AI agent ran the command instead of you.
+  public var agent: Agent?
 
-  public init(command: String, date: Date? = nil) {
+  public init(command: String, date: Date? = nil, agent: Agent? = nil) {
     self.command = command
     self.date = date
+    self.agent = agent
   }
 }
 
@@ -14,13 +17,52 @@ public struct CommandUsage: Codable, Hashable, Sendable, Identifiable {
   public var command: String
   public var count: Int
   public var lastUsed: Date?
+  /// The agents that ran this command, if any.
+  public var agents: [Agent]
 
   public var id: String { command }
 
-  public init(command: String, count: Int, lastUsed: Date? = nil) {
+  public init(command: String, count: Int, lastUsed: Date? = nil, agents: [Agent] = []) {
     self.command = command
     self.count = count
     self.lastUsed = lastUsed
+    self.agents = agents
+  }
+
+  /// Groups the entries that invoke the tool, most recent first.
+  public static func group(_ entries: [HistoryEntry], for tool: CLITool) -> [CommandUsage] {
+    let names = Set(tool.commandNames + [tool.name])
+    var grouped: [String: CommandUsage] = [:]
+    var order: [String] = []
+
+    for entry in entries where ShellHistory.invokes(names, in: entry.command) {
+      let command = entry.command.trimmingCharacters(in: .whitespacesAndNewlines)
+      var usage = grouped[command] ?? {
+        order.append(command)
+        return CommandUsage(command: command, count: 0)
+      }()
+
+      usage.count += 1
+      if let date = entry.date, date > (usage.lastUsed ?? .distantPast) {
+        usage.lastUsed = date
+      }
+      if let agent = entry.agent, !usage.agents.contains(agent) {
+        usage.agents.append(agent)
+        usage.agents.sort()
+      }
+      grouped[command] = usage
+    }
+
+    return order
+      .compactMap { grouped[$0] }
+      .sorted {
+        switch ($0.lastUsed, $1.lastUsed) {
+        case let (a?, b?): a > b
+        case (nil, .some): false
+        case (.some, nil): true
+        case (nil, nil): false
+        }
+      }
   }
 }
 
@@ -72,35 +114,7 @@ public struct ShellHistory: Sendable {
 
   /// Groups the history entries that invoke the tool, most recent first.
   public func usage(of tool: CLITool) -> [CommandUsage] {
-    let names = Set(tool.commandNames + [tool.name])
-    var grouped: [String: CommandUsage] = [:]
-    var order: [String] = []
-
-    for entry in entries where Self.invokes(names, in: entry.command) {
-      let command = entry.command.trimmingCharacters(in: .whitespacesAndNewlines)
-
-      if var usage = grouped[command] {
-        usage.count += 1
-        if let date = entry.date, date > (usage.lastUsed ?? .distantPast) {
-          usage.lastUsed = date
-        }
-        grouped[command] = usage
-      } else {
-        grouped[command] = CommandUsage(command: command, count: 1, lastUsed: entry.date)
-        order.append(command)
-      }
-    }
-
-    return order
-      .compactMap { grouped[$0] }
-      .sorted {
-        switch ($0.lastUsed, $1.lastUsed) {
-        case let (a?, b?): a > b
-        case (nil, .some): false
-        case (.some, nil): true
-        case (nil, nil): false
-        }
-      }
+    CommandUsage.group(entries, for: tool)
   }
 
   /// How many history entries ran each tool, keyed by tool ID.

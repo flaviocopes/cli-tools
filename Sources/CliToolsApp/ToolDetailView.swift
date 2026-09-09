@@ -8,9 +8,15 @@ struct ToolDetailView: View {
   @State private var copied = false
   @State private var usage: [CommandUsage] = []
   @State private var showAllUsage = false
+  @State private var agentUsage: [CommandUsage] = []
+  @State private var showAllAgentUsage = false
 
   private var historyKey: String {
     "\(tool.id)|\(model.history?.loadedAt.timeIntervalSince1970 ?? 0)"
+  }
+
+  private var agentHistoryKey: String {
+    "\(tool.id)|\(model.agentHistory?.loadedAt.timeIntervalSince1970 ?? 0)"
   }
 
   var body: some View {
@@ -54,6 +60,7 @@ struct ToolDetailView: View {
         }
 
         yourHistory
+        agentHistory
         examples
 
         if tool.commandNames.count > 1 {
@@ -82,6 +89,10 @@ struct ToolDetailView: View {
     .task(id: historyKey) {
       showAllUsage = false
       usage = await model.usage(of: tool)
+    }
+    .task(id: agentHistoryKey) {
+      showAllAgentUsage = false
+      agentUsage = await model.agentUsage(of: tool)
     }
     .task(id: tool.id) {
       await model.inspect(tool)
@@ -203,6 +214,80 @@ struct ToolDetailView: View {
   }
 
   @ViewBuilder
+  private var agentHistory: some View {
+    let visible = showAllAgentUsage ? agentUsage : Array(agentUsage.prefix(8))
+    let runs = agentUsage.reduce(0) { $0 + $1.count }
+
+    DetailSection("Agent History") {
+      if model.isLoadingAgentHistory {
+        Card {
+          HStack(spacing: 8) {
+            ProgressView()
+              .controlSize(.small)
+            Text("Reading agent transcripts…")
+              .foregroundStyle(.secondary)
+          }
+        }
+      } else if model.agentHistory == nil {
+        Card {
+          VStack(alignment: .leading, spacing: 10) {
+            Text("See how Cursor, Codex, and Claude Code ran this tool. Reading their transcripts takes a few seconds.")
+              .font(.callout)
+              .foregroundStyle(.secondary)
+
+            Button {
+              Task { await model.loadAgentHistory() }
+            } label: {
+              Label("Find agent runs", systemImage: "sparkles")
+            }
+            .controlSize(.small)
+          }
+        }
+      } else if agentUsage.isEmpty {
+        Card {
+          HStack {
+            Text("No agent runs found.")
+              .font(.callout)
+              .foregroundStyle(.secondary)
+            Spacer()
+            refreshAgentHistory
+          }
+        }
+      } else {
+        VStack(alignment: .leading, spacing: 8) {
+          HStack {
+            Text("^[\(runs) run](inflect: true) · ^[\(agentUsage.count) distinct command](inflect: true)")
+            Spacer()
+            refreshAgentHistory
+          }
+          .font(.caption)
+          .foregroundStyle(.secondary)
+
+          ForEach(visible) { item in
+            UsageCard(usage: item)
+          }
+
+          if agentUsage.count > 8 {
+            Button(showAllAgentUsage ? "Show fewer" : "Show all \(agentUsage.count)") {
+              showAllAgentUsage.toggle()
+            }
+            .buttonStyle(.link)
+            .font(.callout)
+          }
+        }
+      }
+    }
+  }
+
+  private var refreshAgentHistory: some View {
+    Button("Refresh") {
+      Task { await model.loadAgentHistory() }
+    }
+    .buttonStyle(.link)
+    .font(.caption)
+  }
+
+  @ViewBuilder
   private var examples: some View {
     if let examples = tool.examples, !examples.isEmpty {
       DetailSection("Examples") {
@@ -301,6 +386,14 @@ private struct UsageCard: View {
             if let lastUsed = usage.lastUsed {
               Text("·")
               Text(lastUsed, format: .relative(presentation: .named))
+            }
+
+            ForEach(usage.agents, id: \.self) { agent in
+              Text(agent.label)
+                .font(.caption2.weight(.medium))
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(Capsule().fill(.quaternary.opacity(0.6)))
             }
           }
           .font(.caption)

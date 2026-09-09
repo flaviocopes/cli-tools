@@ -101,6 +101,14 @@ clitools history gh --limit 10
 
 This reads your shell history (zsh, bash, and fish) and groups the commands that ran the tool. Nothing from your history is written to the catalog.
 
+AI agents never touch your shell history. They run commands in their own processes. But Cursor, Codex, and Claude Code each keep session transcripts in your home folder, and every shell call is in there. Ask for those instead:
+
+```bash
+clitools history gh --agents
+```
+
+This scans a lot of data, so it takes a few seconds. In the app the same thing sits behind a **Find agent runs** button in the tool's detail pane. It reads the transcripts once and keeps them in memory while the app is open.
+
 Get a summary of the catalog:
 
 ```bash

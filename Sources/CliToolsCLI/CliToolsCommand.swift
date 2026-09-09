@@ -260,7 +260,8 @@ struct CliToolsCommand {
   private static func history(_ options: ParsedArguments, _ repository: CatalogRepository) async throws {
     let catalog = try await loadCatalog(repository)
     let tool = try catalog.tool(matching: try identifier(options, command: "history"))
-    var usage = ShellHistory.load().usage(of: tool)
+    let agents = options.has("--agents")
+    var usage = agents ? AgentHistory.load().usage(of: tool) : ShellHistory.load().usage(of: tool)
     let total = usage.count
 
     if let limit = try options.int("--limit") {
@@ -273,7 +274,7 @@ struct CliToolsCommand {
     }
 
     guard !usage.isEmpty else {
-      print("No runs of \(tool.name) found in your shell history.")
+      print("No runs of \(tool.name) found in \(agents ? "your agent transcripts" : "your shell history").")
       return
     }
 

@@ -75,12 +75,17 @@ enum Commands {
     CommandSpec(
       name: "history",
       summary: "Show how you ran a tool, from your shell history.",
-      usage: "clitools history <tool> [--limit <n>] [--json]",
+      usage: "clitools history <tool> [--agents] [--limit <n>] [--json]",
       options: [
+        Option(name: "--agents", help: "Show runs by AI agents (Cursor, Codex, Claude Code) instead of yours."),
         Option(name: "--limit", help: "Show at most this many commands.", takesValue: true),
         json
       ],
-      details: "Reads zsh, bash, and fish history. Nothing is written to the catalog."
+      details: """
+        Reads zsh, bash, and fish history. Nothing is written to the catalog.
+        With --agents it reads the session transcripts that Cursor, Codex, and
+        Claude Code keep in your home folder. That can take a few seconds.
+        """
     ),
     CommandSpec(
       name: "favorite",

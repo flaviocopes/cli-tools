@@ -164,10 +164,14 @@ enum Output {
 
   static func usage(_ usage: [CommandUsage]) {
     let countWidth = usage.map { "×\($0.count)".count }.max() ?? 2
-    for item in usage {
+    let agentLabels = usage.map { $0.agents.map(\.label).joined(separator: ", ") }
+    let agentWidth = agentLabels.map(\.count).max() ?? 0
+
+    for (item, agents) in zip(usage, agentLabels) {
       let count = pad("×\(item.count)", to: countWidth + 2)
       let date = item.lastUsed?.formatted(date: .abbreviated, time: .omitted) ?? "unknown date"
-      print("\(count)\(pad(date, to: 14))\(item.command)")
+      let agentColumn = agentWidth == 0 ? "" : pad(agents, to: agentWidth + 2)
+      print("\(count)\(pad(date, to: 14))\(agentColumn)\(item.command)")
     }
   }
 }

@@ -68,6 +68,8 @@ final class CatalogViewModel {
   var inspectingToolIDs: Set<CLITool.ID> = []
   var errorMessage: String?
   var history: ShellHistory?
+  var agentHistory: AgentHistory?
+  var isLoadingAgentHistory = false
 
   @ObservationIgnored
   private let repository = CatalogRepository()
@@ -177,6 +179,24 @@ final class CatalogViewModel {
     guard let history else { return [] }
     return await Task.detached(priority: .userInitiated) {
       history.usage(of: tool)
+    }.value
+  }
+
+  /// Reads every agent transcript on disk. Slow, so it only runs when asked.
+  func loadAgentHistory() async {
+    guard !isLoadingAgentHistory else { return }
+    isLoadingAgentHistory = true
+    defer { isLoadingAgentHistory = false }
+
+    agentHistory = await Task.detached(priority: .userInitiated) {
+      AgentHistory.load()
+    }.value
+  }
+
+  func agentUsage(of tool: CLITool) async -> [CommandUsage] {
+    guard let agentHistory else { return [] }
+    return await Task.detached(priority: .userInitiated) {
+      agentHistory.usage(of: tool)
     }.value
   }
 
