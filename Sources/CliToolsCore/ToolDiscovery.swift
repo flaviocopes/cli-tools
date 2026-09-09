@@ -28,7 +28,8 @@ public struct ToolDiscovery: Sendable {
     var applicationCommands: [String: [URL]] = [:]
     var runtimeCommands: [String: [URL]] = [:]
     var names = Set<String>()
-    var tools: [CLITool] = []
+    var tools = npmTools(at: date)
+    names.formUnion(tools.flatMap(\.commandNames))
 
     for directory in candidateDirectories()
     where !isSystemDirectory(directory) && !isInternalDirectory(directory) {
@@ -289,6 +290,7 @@ public struct ToolDiscovery: Sendable {
     package: String,
     entries: [URL],
     source: ToolSource,
+    commandNames: [String]? = nil,
     installedAt: Date? = nil,
     date: Date
   ) -> CLITool {
@@ -302,7 +304,8 @@ public struct ToolDiscovery: Sendable {
       }
       .first
       ?? sortedEntries.first!
-    let commands = Array(Set(sortedEntries.map(\.lastPathComponent))).sorted()
+    let commands = commandNames
+      ?? Array(Set(sortedEntries.map(\.lastPathComponent))).sorted()
     let displayName = commands.count == 1 ? commands[0] : shortPackage
 
     return CLITool(
@@ -400,6 +403,122 @@ public struct ToolDiscovery: Sendable {
     return packages
   }
 
+  private func npmTools(at date: Date) -> [CLITool] {
+    npmRoots().flatMap { root in
+      npmPackageDirectories(in: root).compactMap { packageDirectory in
+        npmTool(in: packageDirectory, root: root, date: date)
+      }
+    }
+  }
+
+  private func npmRoots() -> [URL] {
+    var roots: [URL] = []
+
+    if includePackageManagers {
+      roots.append(URL(fileURLWithPath: "/opt/homebrew/lib/node_modules"))
+      roots.append(URL(fileURLWithPath: "/usr/local/lib/node_modules"))
+    }
+
+    let nvmRoot = homeDirectory.appending(
+      path: ".nvm/versions/node",
+      directoryHint: .isDirectory
+    )
+    roots.append(contentsOf:
+      contentsOfDirectories(in: nvmRoot).map {
+        $0.appending(path: "lib/node_modules", directoryHint: .isDirectory)
+      }
+    )
+
+    var seen = Set<String>()
+    return roots.filter {
+      seen.insert($0.standardizedFileURL.path).inserted
+    }
+  }
+
+  private func npmPackageDirectories(in root: URL) -> [URL] {
+    contentsOfDirectories(in: root).flatMap { directory in
+      if directory.lastPathComponent.hasPrefix("@") {
+        return contentsOfDirectories(in: directory)
+      }
+
+      return [directory]
+    }
+  }
+
+  private func contentsOfDirectories(in parent: URL) -> [URL] {
+    guard let entries = try? FileManager.default.contentsOfDirectory(
+      at: parent,
+      includingPropertiesForKeys: [.isDirectoryKey],
+      options: [.skipsHiddenFiles]
+    ) else {
+      return []
+    }
+
+    return entries.filter {
+      if (try? $0.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true {
+        return true
+      }
+
+      let resolved = $0.resolvingSymlinksInPath()
+      return (try? resolved.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true
+    }
+  }
+
+  private func npmTool(
+    in packageDirectory: URL,
+    root: URL,
+    date: Date
+  ) -> CLITool? {
+    let manifestURL = packageDirectory.appending(path: "package.json")
+    guard
+      let data = try? Data(contentsOf: manifestURL),
+      let manifest = try? JSONDecoder().decode(NpmPackageManifest.self, from: data),
+      !["npm", "corepack"].contains(manifest.name),
+      var bins = manifest.bin?.commands
+    else {
+      return nil
+    }
+
+    if let relativePath = bins.removeValue(forKey: "") {
+      let command = manifest.name.split(separator: "/").last.map(String.init)
+        ?? manifest.name
+      bins[command] = relativePath
+    }
+
+    guard !bins.isEmpty else {
+      return nil
+    }
+
+    let prefix = root.deletingLastPathComponent().deletingLastPathComponent()
+    let entries = bins.compactMap { command, relativePath -> URL? in
+      let linked = prefix.appending(path: "bin/\(command)")
+      if FileManager.default.isExecutableFile(atPath: linked.path) {
+        return linked
+      }
+
+      let direct = packageDirectory.appending(path: relativePath)
+      return FileManager.default.isExecutableFile(atPath: direct.path) ? direct : nil
+    }
+
+    guard !entries.isEmpty else {
+      return nil
+    }
+
+    var tool = packagedTool(
+      idPrefix: "npm:\(root.standardizedFileURL.path)",
+      package: manifest.name,
+      entries: entries,
+      source: .npm,
+      commandNames: bins.keys.sorted(),
+      installedAt: installationDate(for: packageDirectory, resolved: packageDirectory),
+      date: date
+    )
+    tool.summary = manifest.description
+    tool.version = manifest.version
+    tool.homepage = manifest.homepage.flatMap(URL.init(string:))
+    return tool
+  }
+
   private func applicationName(in path: String) -> String? {
     URL(fileURLWithPath: path).pathComponents
       .first { $0.hasSuffix(".app") }?
@@ -488,6 +607,28 @@ private struct HomebrewInfo: Decodable {
     enum CodingKeys: String, CodingKey {
       case token
       case installedTime = "installed_time"
+    }
+  }
+}
+
+private struct NpmPackageManifest: Decodable {
+  let name: String
+  let version: String?
+  let description: String?
+  let homepage: String?
+  let bin: NpmBin?
+}
+
+private struct NpmBin: Decodable {
+  let commands: [String: String]
+
+  init(from decoder: Decoder) throws {
+    let container = try decoder.singleValueContainer()
+
+    if let path = try? container.decode(String.self) {
+      commands = ["": path]
+    } else {
+      commands = try container.decode([String: String].self)
     }
   }
 }
