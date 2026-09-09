@@ -33,6 +33,30 @@ You can also run the development build:
 swift run CliToolsApp
 ```
 
+## See who runs your tools
+
+Select a tool and the detail pane shows two kinds of history.
+
+**Your History** comes from your shell history (zsh, bash, and fish). It loads with the catalog and groups the commands that ran the tool, most recent first, with a run count and the last time you used it.
+
+**Agent History** covers the commands that AI agents ran. Agents never touch your shell history. They run each command in their own process. But Cursor, Codex, and Claude Code all keep a session transcript on disk, and every shell call is recorded there:
+
+| Agent | Transcripts |
+|---|---|
+| Cursor | `~/.cursor/projects/*/agent-transcripts/` |
+| Codex | `~/.codex/sessions/` |
+| Claude Code | `~/.claude/projects/` |
+
+These transcripts add up to gigabytes, so the app does not read them on its own. Click **Find agent runs** in the detail pane when you want to know. The scan takes a few seconds, then stays in memory while the app is open, so the section fills in instantly for every other tool you select. Each command shows which agents ran it. Click **Refresh** to pick up sessions that finished since.
+
+Nothing from either history is written to the catalog.
+
+A few things to know:
+
+- The transcript formats are undocumented and change between agent releases. The parsers skip anything they do not recognize, so a format change shows up as missing runs, never as a crash.
+- Cursor does not timestamp individual tool calls. Those runs are dated by the chat turn that triggered them.
+- Codex has renamed its shell tool over time. `shell`, `shell_command`, and `exec_command` are all covered. Commands embedded in its newer JavaScript tool are not.
+
 ## Use the CLI
 
 ![The clitools help output listing every command](docs/cli.png)
@@ -101,13 +125,13 @@ clitools history gh --limit 10
 
 This reads your shell history (zsh, bash, and fish) and groups the commands that ran the tool. Nothing from your history is written to the catalog.
 
-AI agents never touch your shell history. They run commands in their own processes. But Cursor, Codex, and Claude Code each keep session transcripts in your home folder, and every shell call is in there. Ask for those instead:
+See how AI agents used it instead:
 
 ```bash
 clitools history gh --agents
 ```
 
-This scans a lot of data, so it takes a few seconds. In the app the same thing sits behind a **Find agent runs** button in the tool's detail pane. It reads the transcripts once and keeps them in memory while the app is open.
+This reads the Cursor, Codex, and Claude Code transcripts described in [See who runs your tools](#see-who-runs-your-tools). It takes a few seconds and adds an agent column to the output.
 
 Get a summary of the catalog:
 
