@@ -6,6 +6,8 @@ The native app finds packages you explicitly installed with Homebrew, npm, and C
 
 The companion CLI reads the same catalog. AI agents can use its JSON output to discover the tools available on your system.
 
+![CLI Tools showing the stripe tool with ready-made examples and its help output](docs/screenshot.png)
+
 ## Requirements
 
 - macOS 14 or later
