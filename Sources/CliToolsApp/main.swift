@@ -346,13 +346,20 @@ private struct ToolDetail: View {
         }
 
         GroupBox("Location") {
-          if let packageName = tool.packageName {
-            LabeledContent("Package", value: packageName)
+          Grid(
+            alignment: .leading,
+            horizontalSpacing: 8,
+            verticalSpacing: 6
+          ) {
+            if let packageName = tool.packageName {
+              locationRow("Package", value: packageName)
+            }
+            locationRow("Command", value: tool.name)
+            locationRow("Path", value: tool.path)
+            locationRow("Resolved path", value: tool.resolvedPath)
+            locationRow("Available", value: tool.isAvailable ? "Yes" : "No")
           }
-          LabeledContent("Command", value: tool.name)
-          LabeledContent("Path", value: tool.path)
-          LabeledContent("Resolved path", value: tool.resolvedPath)
-          LabeledContent("Available", value: tool.isAvailable ? "Yes" : "No")
+          .frame(maxWidth: .infinity, alignment: .leading)
         }
 
         if tool.commandNames.count > 1 {
@@ -425,6 +432,18 @@ private struct ToolDetail: View {
         guard !Task.isCancelled else { return }
         await model.inspect(tool)
       }
+    }
+  }
+
+  private func locationRow(_ label: String, value: String) -> some View {
+    GridRow {
+      Text(label)
+        .foregroundStyle(.secondary)
+        .gridColumnAlignment(.trailing)
+
+      Text(value)
+        .textSelection(.enabled)
+        .gridColumnAlignment(.leading)
     }
   }
 }
