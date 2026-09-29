@@ -6,7 +6,9 @@ The native app finds packages you explicitly installed with Homebrew, npm, and C
 
 The companion CLI reads the same catalog. AI agents can use its JSON output to discover the tools available on your system.
 
-[![Watch the 30-second CLI Tools demo](docs/showreel-poster.jpg)](https://github.com/flaviocopes/cli-tools/raw/main/docs/showreel.mp4)
+Read the announcement and watch the 30-second demo on my blog: [I launched CLI Tools](https://flaviocopes.com/cli-tools/).
+
+[![Watch the 30-second CLI Tools demo](docs/showreel-poster.jpg)](https://flaviocopes.com/cli-tools/)
 
 ![CLI Tools showing every command-line tool found on my Mac](docs/all-tools.png)
 

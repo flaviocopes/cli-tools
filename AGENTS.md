@@ -50,4 +50,4 @@ Build output goes to `.build/`, the app bundle to `dist/`. Both are ignored by g
 - The persisted catalog lives at `~/Library/Application Support/CliTools/catalog.json`.
 - The app icon source is `Assets/AppIcon.png`; `Scripts/build-app.sh` turns it into `AppIcon.icns` inside the bundle.
 - README images live in `docs/`; the companion blog post is `~/www/flaviocopes.com/src/posts/cli-tools.md`, with images in `public/images/cli-tools/`.
-- The README demo video `docs/showreel.mp4` and its poster `docs/showreel-poster.jpg` come from the separate Remotion project `~/dev/cli-tools-showreel`; `npm run build` there renders `out/cli-tools-showreel.mp4`.
+- The demo video is hosted on flaviocopes.com (`public/images/cli-tools/demo.mp4`, embedded in `src/posts/cli-tools.md`), not in this repo; the README's `docs/showreel-poster.jpg` links to that post. The video comes from the separate Remotion project `~/dev/cli-tools-showreel`, where `npm run build` renders `out/cli-tools-showreel.mp4`.
