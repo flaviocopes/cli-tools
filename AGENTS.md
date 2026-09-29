@@ -38,6 +38,8 @@ Build output goes to `.build/`, the app bundle to `dist/`. Both are ignored by g
 - Load cached usage automatically when a tool is selected, then refresh it in the background while its detail view stays open.
 - Favor a modern, sleek macOS interface inspired by Things without copying its design.
 - When a filtered section excludes the current selection, show the detail pane's empty state instead of stale tool details.
+- Scan AI agent transcripts for a tool's runs only on demand (the "Find agent runs" button or `clitools history --agents`), never automatically when a tool opens.
+- Add new screenshots to both the README and the flaviocopes.com post about CLI Tools.
 
 ## Learned Workspace Facts
 - This project provides both a native macOS SwiftUI desktop app and a `clitools` command-line interface for discovering and managing installed CLI tools.
@@ -46,3 +48,6 @@ Build output goes to `.build/`, the app bundle to `dist/`. Both are ignored by g
 - Package commands stay grouped under their package so helper executables do not flood the catalog.
 - Homebrew discovery reads local installation receipts because aggregate Homebrew metadata can omit tapped formulas.
 - The persisted catalog lives at `~/Library/Application Support/CliTools/catalog.json`.
+- The app icon source is `Assets/AppIcon.png`; `Scripts/build-app.sh` turns it into `AppIcon.icns` inside the bundle.
+- README images live in `docs/`; the companion blog post is `~/www/flaviocopes.com/src/posts/cli-tools.md`, with images in `public/images/cli-tools/`.
+- The README demo video `docs/showreel.mp4` and its poster `docs/showreel-poster.jpg` come from the separate Remotion project `~/dev/cli-tools-showreel`; `npm run build` there renders `out/cli-tools-showreel.mp4`.
