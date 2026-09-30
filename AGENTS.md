@@ -16,7 +16,8 @@ swift build              # build every target (debug)
 swift test               # run the tests, must pass before committing
 swift run clitools list  # run the CLI from source
 swift run CliToolsApp    # run the app from source
-./Scripts/build-app.sh   # release build, produces dist/CLI Tools.app (ad-hoc signed)
+./Scripts/build-app.sh   # universal release build, produces dist/CLI Tools.app (ad-hoc signed)
+./Scripts/build-release.sh # the app zipped for a GitHub release, dist/CLI-Tools-<version>.zip
 open "dist/CLI Tools.app"
 ./Scripts/install-cli.sh # release build of clitools, symlinked into ~/.local/bin (or the dir passed as $1)
 ```
@@ -27,6 +28,8 @@ Build output goes to `.build/`, the app bundle to `dist/`. Both are ignored by g
 
 - Add logic to `CliToolsCore` and cover it with a test. Keep the CLI and the app thin.
 - Any new field on `CLITool` must be optional so old `catalog.json` files still decode.
+- The version lives in `Commands.version` in `Sources/CliToolsCLI/Commands.swift`. The CLI prints it, and `Scripts/build-app.sh` writes it into the app's `Info.plist`.
+- `Sources/CliToolsApp/AppUpdater.swift` checks the GitHub releases once a day and installs updates. It's an identical copy of the template in the `mac-app-updater` skill, so change the template and copy it over instead of editing it here. Every release needs its `vX.Y.Z` tag, the zip from `Scripts/build-release.sh` attached, and a `Commands.version` that matches the tag, or the app refuses the update.
 - The app has no automated UI tests. Verify visual changes by running `./Scripts/build-app.sh` and opening the app.
 - Inspection runs tools with `--version` and `--help` and does network requests (Homebrew metadata, tldr pages). It only runs for a selected tool, never during a scan.
 - Never write shell history contents to the catalog.

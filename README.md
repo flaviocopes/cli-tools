@@ -12,12 +12,39 @@ Read the announcement and watch the 30-second demo on my blog: [I launched CLI T
 
 ![CLI Tools showing every command-line tool found on my Mac](docs/all-tools.png)
 
-## Requirements
+## Download
 
-- macOS 14 or later
-- Xcode 26 or a Swift 6.2 toolchain
+Get `CLI-Tools-1.0.0.zip` from the [latest release](https://github.com/flaviocopes/cli-tools/releases/latest), unzip it, and drag CLI Tools to your Applications folder. It runs on macOS 14 Sonoma or later, on Apple silicon and Intel Macs.
 
-## Run the app
+### Opening it the first time
+
+CLI Tools isn't signed with an Apple Developer ID or notarized by Apple. So the first time you open it, macOS says it "could not verify CLI Tools is free of malware". Click **Done**, then allow it in one of two ways.
+
+In System Settings, open **Privacy & Security** and scroll down to the message about CLI Tools. Click **Open Anyway**, confirm, and open the app again. The button shows up for about an hour after you try to open the app.
+
+In Terminal, remove the quarantine flag macOS adds to downloaded files, then open the app:
+
+```sh
+xattr -dr com.apple.quarantine "/Applications/CLI Tools.app"
+```
+
+The same command fixes a message saying CLI Tools is damaged. You don't need to turn off Gatekeeper for either option.
+
+On a work laptop you might not be able to install apps in `/Applications`. You can keep CLI Tools in the `Applications` folder inside your home folder, and run the command on `~/Applications/CLI Tools.app`. If your company blocks apps that aren't notarized, ask your IT team.
+
+### Updates
+
+Once a day, CLI Tools asks GitHub whether there's a newer version. When there is, it shows what's new, and **Install and Relaunch** puts it in place of the old one. **CLI Tools → Check for Updates…** checks right away.
+
+To turn off the daily check, run this in Terminal:
+
+```bash
+defaults write com.flaviocopes.clitools AppUpdaterAutomaticChecks -bool false
+```
+
+## Build it from source
+
+You need macOS 14 or later, and Xcode 26 or a Swift 6.2 toolchain.
 
 Build the macOS app bundle:
 

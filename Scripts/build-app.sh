@@ -1,4 +1,6 @@
 #!/bin/sh
+# Builds a universal (Apple silicon and Intel) dist/CLI Tools.app with an ad-hoc signature.
+# The version comes from Commands.version in Sources/CliToolsCLI/Commands.swift.
 
 set -eu
 
@@ -11,11 +13,12 @@ ICON_SOURCE="$ROOT/Assets/AppIcon.png"
 ICONSET="$ROOT/.build/AppIcon.iconset"
 
 cd "$ROOT"
-swift build -c release --product CliToolsApp
+VERSION=$(sed -n 's/^ *static let version = "\(.*\)"$/\1/p' Sources/CliToolsCLI/Commands.swift)
+swift build -c release --arch arm64 --arch x86_64 --product CliToolsApp
 
 rm -rf "$APP"
 mkdir -p "$MACOS" "$RESOURCES"
-cp ".build/release/CliToolsApp" "$MACOS/CLI Tools"
+cp ".build/apple/Products/Release/CliToolsApp" "$MACOS/CLI Tools"
 
 rm -rf "$ICONSET"
 mkdir -p "$ICONSET"
@@ -31,7 +34,7 @@ sips -z 512 512 "$ICON_SOURCE" --out "$ICONSET/icon_512x512.png" >/dev/null
 cp "$ICON_SOURCE" "$ICONSET/icon_512x512@2x.png"
 iconutil -c icns "$ICONSET" -o "$RESOURCES/AppIcon.icns"
 
-cat > "$CONTENTS/Info.plist" <<'PLIST'
+cat > "$CONTENTS/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -53,9 +56,9 @@ cat > "$CONTENTS/Info.plist" <<'PLIST'
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleShortVersionString</key>
-  <string>0.1.0</string>
+  <string>$VERSION</string>
   <key>CFBundleVersion</key>
-  <string>1</string>
+  <string>$VERSION</string>
   <key>LSMinimumSystemVersion</key>
   <string>14.0</string>
   <key>NSHighResolutionCapable</key>
