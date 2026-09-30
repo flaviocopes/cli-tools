@@ -6,6 +6,10 @@ struct CliToolsDesktopApp: App {
   @State private var model = CatalogViewModel()
   @Environment(\.scenePhase) private var scenePhase
 
+  init() {
+    AppUpdater.shared.start(repository: "flaviocopes/cli-tools")
+  }
+
   var body: some Scene {
     WindowGroup("CLI Tools") {
       CatalogView()
@@ -22,6 +26,13 @@ struct CliToolsDesktopApp: App {
     }
     .defaultSize(width: 1360, height: 840)
     .windowToolbarStyle(.unified(showsTitle: false))
+    .commands {
+      CommandGroup(after: .appInfo) {
+        Button("Check for Updates…") {
+          AppUpdater.shared.checkForUpdates()
+        }
+      }
+    }
     .onChange(of: scenePhase) { _, phase in
       if phase == .active {
         Task { await model.refresh() }
