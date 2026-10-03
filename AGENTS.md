@@ -16,8 +16,8 @@ swift build              # build every target (debug)
 swift test               # run the tests, must pass before committing
 swift run clitools list  # run the CLI from source
 swift run CliToolsApp    # run the app from source
-./Scripts/build-app.sh   # universal release build, produces dist/CLI Tools.app (ad-hoc signed)
-./Scripts/build-release.sh # the app zipped for a GitHub release, dist/CLI-Tools-<version>.zip
+./Scripts/build-app.sh   # universal release build, produces dist/CLI Tools.app (Developer ID when the certificate is in the keychain, ad-hoc otherwise)
+./Scripts/build-release.sh # builds, notarizes when Developer ID signed, staples, and writes dist/CLI-Tools-<version>.zip
 open "dist/CLI Tools.app"
 ./Scripts/install-cli.sh # release build of clitools, symlinked into ~/.local/bin (or the dir passed as $1)
 ```
@@ -29,6 +29,7 @@ Build output goes to `.build/`, the app bundle to `dist/`. Both are ignored by g
 - Add logic to `CliToolsCore` and cover it with a test. Keep the CLI and the app thin.
 - Any new field on `CLITool` must be optional so old `catalog.json` files still decode.
 - The version lives in `Commands.version` in `Sources/CliToolsCLI/Commands.swift`. The CLI prints it, and `Scripts/build-app.sh` writes it into the app's `Info.plist`.
+- Releases are signed with Flavio's Developer ID (team `DGFKNTAG99`) with the hardened runtime, and notarized by `Scripts/build-release.sh`. It needs the certificate in the keychain and a notarytool keychain profile named `notary`, and it skips notarization on an ad-hoc build. CI and forks have no certificate, so `Scripts/build-app.sh` signs ad-hoc there. Every release gets a section in `CHANGELOG.md` when that file exists, newest first.
 - `Sources/CliToolsApp/AppUpdater.swift` checks the GitHub releases once a day and installs updates. It's an identical copy of the template in the `mac-app-updater` skill, so change the template and copy it over instead of editing it here. Every release needs its `vX.Y.Z` tag, the zip from `Scripts/build-release.sh` attached, and a `Commands.version` that matches the tag, or the app refuses the update.
 - The app has no automated UI tests. Verify visual changes by running `./Scripts/build-app.sh` and opening the app.
 - Inspection runs tools with `--version` and `--help` and does network requests (Homebrew metadata, tldr pages). It only runs for a selected tool, never during a scan.

@@ -1,5 +1,6 @@
 #!/bin/sh
-# Builds a universal (Apple silicon and Intel) dist/CLI Tools.app with an ad-hoc signature.
+# Builds a universal (Apple silicon and Intel) dist/CLI Tools.app.
+# Signs with Flavio's Developer ID when the certificate is in the keychain, and ad-hoc everywhere else (CI, forks).
 # The version comes from Commands.version in Sources/CliToolsCLI/Commands.swift.
 
 set -eu
@@ -67,5 +68,23 @@ cat > "$CONTENTS/Info.plist" <<PLIST
 </plist>
 PLIST
 
-codesign --force --deep --sign - "$APP"
+IDENTITY=$(security find-identity -v -p codesigning | awk '/"Developer ID Application: Flavio Copes \(DGFKNTAG99\)"/ { print $2; exit }')
+if [ -n "$IDENTITY" ]; then
+  SIGNATURE="Developer ID"
+  find "$APP" -type f | while read -r file; do
+    case $(file -b "$file") in
+      Mach-O*)
+        codesign --force --options runtime --timestamp --sign "$IDENTITY" "$file"
+        ;;
+    esac
+  done
+  codesign --force --options runtime --timestamp --sign "$IDENTITY" "$APP"
+  codesign --verify --strict "$APP"
+else
+  SIGNATURE="ad-hoc"
+  codesign --force --deep --sign - "$APP"
+  codesign --verify --deep --strict "$APP"
+fi
+
+echo "Built $APP $VERSION for $(lipo -archs "$MACOS/CLI Tools"), $SIGNATURE signed"
 echo "$APP"
