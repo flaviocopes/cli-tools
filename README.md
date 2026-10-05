@@ -14,7 +14,7 @@ Read the announcement and watch the 30-second demo on my blog: [I launched CLI T
 
 ## Download
 
-Get `CLI-Tools-1.1.0.zip` from the [latest release](https://github.com/flaviocopes/cli-tools/releases/latest), unzip it, and drag CLI Tools to your Applications folder. It runs on macOS 14 Sonoma or later, on Apple silicon and Intel Macs.
+Get `CLI-Tools-1.2.0.zip` from the [latest release](https://github.com/flaviocopes/cli-tools/releases/latest), unzip it, and drag CLI Tools to your Applications folder. It runs on macOS 14 Sonoma or later, on Apple silicon and Intel Macs.
 
 ### Opening it the first time
 
@@ -196,13 +196,13 @@ The `--json` output looks like this. `command` and `date` are optional:
 ```json
 {
   "name": "postdeck",
-  "version": "1.1.0",
+  "version": "1.0.0",
   "summary": "Builds slideshows in the Postdeck app from posts on X, text slides and images.",
   "capabilities": [
-    { "description": "Add a post from X as a slide", "command": "postdeck add-post Launch --file post.json" }
+    { "description": "Add a post from X as a slide", "command": "postdeck add-post \"This week's apps\" post.json" }
   ],
   "changelog": [
-    { "version": "1.1.0", "date": "2026-10-05", "changes": ["Added the capabilities command"] }
+    { "version": "1.0.0", "date": "2026-10-03", "changes": ["First release: Postdeck app and Chrome extension turn X posts into slideshow slides."] }
   ]
 }
 ```
