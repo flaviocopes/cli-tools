@@ -14,7 +14,7 @@ Read the announcement and watch the 30-second demo on my blog: [I launched CLI T
 
 ## Download
 
-Get `CLI-Tools-1.2.0.zip` from the [latest release](https://github.com/flaviocopes/cli-tools/releases/latest), unzip it, and drag CLI Tools to your Applications folder. It runs on macOS 14 Sonoma or later, on Apple silicon and Intel Macs.
+Get `CLI-Tools-1.3.0.zip` from the [latest release](https://github.com/flaviocopes/cli-tools/releases/latest), unzip it, and drag CLI Tools to your Applications folder. It runs on macOS 14 Sonoma or later, on Apple silicon and Intel Macs.
 
 ### Opening it the first time
 

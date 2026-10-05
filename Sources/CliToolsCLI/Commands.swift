@@ -2,7 +2,7 @@ import CliToolsCore
 import Foundation
 
 enum Commands {
-  static let version = "1.2.0"
+  static let version = "1.3.0"
 
   /// What `clitools capabilities` prints. Add a changelog entry for every release, newest first.
   static let manifest = ToolCapabilities(
@@ -20,6 +20,9 @@ enum Commands {
       .init("Rescan the Mac and report the tools that appeared or disappeared", command: "clitools scan")
     ],
     changelog: [
+      .init(version: "1.3.0", date: "2026-10-05", changes: [
+        "The app's tool list shows only each tool's name when the window is narrow. The CLI didn't change."
+      ]),
       .init(version: "1.2.0", date: "2026-10-05", changes: [
         "New 'capabilities' command. Alone it describes clitools, with a tool it asks that tool, and with --all it lists what every tool that supports it can do.",
         "'inspect' saves a tool's capabilities when its help lists a 'capabilities' command, and 'search' matches them.",
