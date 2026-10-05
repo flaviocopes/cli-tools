@@ -94,6 +94,8 @@ enum CLIError: LocalizedError {
   case missingValue(option: String)
   case invalidValue(option: String, value: String)
   case noExamples(String)
+  case noCapabilities(String)
+  case toolAndAll
 
   var errorDescription: String? {
     switch self {
@@ -109,6 +111,10 @@ enum CLIError: LocalizedError {
       "'\(value)' is not a valid value for '\(option)'."
     case .noExamples(let name):
       "No examples found for \(name)."
+    case .noCapabilities(let name):
+      "\(name) doesn't support 'capabilities'. Run 'clitools show \(name)' to see what the catalog knows."
+    case .toolAndAll:
+      "Use a tool name or --all, not both."
     }
   }
 }

@@ -142,6 +142,11 @@ enum Output {
       print("\(pad(label + ":", to: width + 2))\(value)")
     }
 
+    if let capabilities = tool.capabilities?.capabilities {
+      print("\nWhat it can do:")
+      capabilities.forEach { print("  - \($0.description)") }
+    }
+
     if let examples = tool.examples, !examples.isEmpty {
       print("\nExamples:")
       self.examples(examples)
@@ -159,6 +164,46 @@ enum Output {
         print("  \(example.description)")
       }
       print("    $ \(example.command)")
+    }
+  }
+
+  static func capabilities(_ manifest: ToolCapabilities, json: Bool) throws {
+    if json {
+      try self.json(manifest)
+      return
+    }
+
+    print([manifest.name, manifest.version].compactMap { $0 }.joined(separator: " "))
+    if let summary = manifest.summary {
+      print(summary)
+    }
+
+    print("\nWhat it can do:")
+    for (index, capability) in manifest.capabilities.enumerated() {
+      if index > 0 { print("") }
+      print("  \(capability.description)")
+      if let command = capability.command {
+        print("    $ \(command)")
+      }
+    }
+
+    guard !manifest.changelog.isEmpty else { return }
+    print("\nChanges:")
+    for release in manifest.changelog {
+      print("  \(release.version)\(release.date.map { " (\($0))" } ?? "")")
+      release.changes.forEach { print("    - \($0)") }
+    }
+  }
+
+  /// One block per tool: name, version, summary, and what it can do, without commands or changes.
+  static func capabilitiesOverview(_ manifests: [ToolCapabilities]) {
+    for (index, manifest) in manifests.enumerated() {
+      if index > 0 { print("") }
+      print([manifest.name, manifest.version].compactMap { $0 }.joined(separator: " "))
+      if let summary = manifest.summary {
+        print(summary)
+      }
+      manifest.capabilities.forEach { print("  - \($0.description)") }
     }
   }
 

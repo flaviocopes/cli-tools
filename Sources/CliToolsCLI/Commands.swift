@@ -1,7 +1,38 @@
+import CliToolsCore
 import Foundation
 
 enum Commands {
-  static let version = "1.1.0"
+  static let version = "1.2.0"
+
+  /// What `clitools capabilities` prints. Add a changelog entry for every release, newest first.
+  static let manifest = ToolCapabilities(
+    name: "clitools",
+    version: version,
+    summary: "Discover the CLI tools installed on this Mac, and find the one that can do a task.",
+    capabilities: [
+      .init("See what every installed tool that supports 'capabilities' can do, in one call", command: "clitools capabilities --all --json"),
+      .init("Find a tool by name, package, description, or what it can do", command: "clitools search slideshow --json"),
+      .init("List the CLI tools installed with Homebrew, npm, Cargo, or by hand", command: "clitools list --json"),
+      .init("Learn about one tool: version, description, help, and examples", command: "clitools inspect gh --json"),
+      .init("Print ready-to-use examples for a tool", command: "clitools examples rg"),
+      .init("Show how you, or your AI agents, ran a tool", command: "clitools history gh --agents"),
+      .init("Find the tools you never run", command: "clitools list --unused"),
+      .init("Rescan the Mac and report the tools that appeared or disappeared", command: "clitools scan")
+    ],
+    changelog: [
+      .init(version: "1.2.0", date: "2026-10-05", changes: [
+        "New 'capabilities' command. Alone it describes clitools, with a tool it asks that tool, and with --all it lists what every tool that supports it can do.",
+        "'inspect' saves a tool's capabilities when its help lists a 'capabilities' command, and 'search' matches them.",
+        "Finds commands linked into /opt/homebrew/bin from your home folder, like testvm."
+      ]),
+      .init(version: "1.1.0", date: "2026-10-03", changes: [
+        "Signed with a Developer ID and notarized. The CLI didn't change."
+      ]),
+      .init(version: "1.0.0", date: "2026-09-30", changes: [
+        "First release: scan, list, search, show, inspect, examples, history, favorite, archive, and stats, all with --json."
+      ])
+    ]
+  )
 
   static let json = Option(name: "--json", help: "Print JSON instead of text.")
 
@@ -71,6 +102,22 @@ enum Commands {
       options: [json],
       details: "Uses cached examples. Inspects the tool first if there are none yet.",
       aliases: ["ex"]
+    ),
+    CommandSpec(
+      name: "capabilities",
+      summary: "What clitools, or another tool, can do, and what changed in each version.",
+      usage: "clitools capabilities [<tool> | --all] [--json]",
+      options: [
+        Option(name: "--all", help: "Every installed tool that supports 'capabilities'.", aliases: ["-a"]),
+        json
+      ],
+      details: """
+        Alone, it describes clitools. With a tool, it runs '<tool> capabilities --json'
+        and saves the answer to the catalog. Only tools whose help lists a
+        'capabilities' command get asked.
+        --all asks again every tool that answered before, so the list is always fresh.
+        A new tool joins it once 'clitools capabilities <tool>' or 'clitools inspect <tool>' has asked it.
+        """
     ),
     CommandSpec(
       name: "history",
@@ -160,6 +207,10 @@ enum Commands {
         clitools list              See what is installed.
         clitools inspect gh        Learn about one tool.
         clitools list --unused     Find tools you never run.
+
+      For agents:
+        clitools capabilities --all --json   What every tool that supports 'capabilities' can do.
+        clitools search <task> --json        Find a tool by what it does.
       """
   }
 

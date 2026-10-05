@@ -47,7 +47,7 @@ extension Catalog {
   }
 
   /// Tools whose name, commands, or package contain the query, or whose
-  /// summary has a word starting with it.
+  /// summary or capabilities have a word starting with it.
   public func search(_ query: String) -> [CLITool] {
     let terms = query
       .lowercased()
@@ -59,7 +59,9 @@ extension Catalog {
       let names = ([tool.name, tool.packageName ?? ""] + tool.commandNames)
         .joined(separator: " ")
         .lowercased()
-      let words = (tool.summary ?? "")
+      let capabilities = tool.capabilities?.capabilities.map(\.description) ?? []
+      let words = ([tool.summary ?? ""] + capabilities)
+        .joined(separator: " ")
         .lowercased()
         .split { !$0.isLetter && !$0.isNumber }
       return terms.allSatisfy { term in

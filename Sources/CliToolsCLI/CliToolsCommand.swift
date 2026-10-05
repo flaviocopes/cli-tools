@@ -72,6 +72,8 @@ struct CliToolsCommand {
       try await inspect(parsed, repository)
     case "examples":
       try await examples(parsed, repository)
+    case "capabilities":
+      try await capabilities(parsed, repository)
     case "history":
       try await history(parsed, repository)
     case "favorite":
@@ -257,6 +259,54 @@ struct CliToolsCommand {
     Output.examples(examples)
   }
 
+  private static func capabilities(_ options: ParsedArguments, _ repository: CatalogRepository) async throws {
+    if options.has("--all") {
+      guard options.positionals.isEmpty else {
+        throw CLIError.toolAndAll
+      }
+
+      _ = try await loadCatalog(repository)
+      let tools = try await repository.refreshCapabilities()
+      let manifests = tools.compactMap(\.capabilities)
+
+      if options.has("--json") {
+        try Output.json(manifests)
+        return
+      }
+
+      guard !manifests.isEmpty else {
+        print("No tool has answered 'capabilities' yet.")
+        Output.hint("Run 'clitools capabilities <tool>' to ask one.")
+        return
+      }
+
+      Output.capabilitiesOverview(manifests)
+      Output.hint("\(manifests.count) tools. Run 'clitools capabilities <tool>' for its commands and changes.")
+      return
+    }
+
+    guard let identifier = options.positionals.first else {
+      try Output.capabilities(Commands.manifest, json: options.has("--json"))
+      return
+    }
+
+    let catalog = try await loadCatalog(repository)
+    var tool = try catalog.tool(matching: identifier)
+
+    if tool.capabilities == nil {
+      tool = try await inspectTool(tool.id, repository)
+    } else if let fresh = await ToolInspector().capabilities(of: tool) {
+      _ = try await repository.updateCapabilities([tool.id: fresh])
+      tool.capabilities = fresh
+    }
+
+    guard let manifest = tool.capabilities else {
+      throw CLIError.noCapabilities(tool.name)
+    }
+
+    try Output.capabilities(manifest, json: options.has("--json"))
+  }
+
   private static func history(_ options: ParsedArguments, _ repository: CatalogRepository) async throws {
     let catalog = try await loadCatalog(repository)
     let tool = try catalog.tool(matching: try identifier(options, command: "history"))
@@ -391,7 +441,8 @@ struct CliToolsCommand {
       help: inspection.help,
       summary: inspection.summary,
       homepage: inspection.homepage,
-      examples: inspection.examples
+      examples: inspection.examples,
+      capabilities: inspection.capabilities
     )
     return updated.tools.first { $0.id == tool.id } ?? tool
   }

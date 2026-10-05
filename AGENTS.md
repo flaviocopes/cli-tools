@@ -33,6 +33,8 @@ Build output goes to `.build/`, the app bundle to `dist/`. Both are ignored by g
 - `Sources/CliToolsApp/AppUpdater.swift` checks the GitHub releases once a day and installs updates. It's an identical copy of the template in the `mac-app-updater` skill, so change the template and copy it over instead of editing it here. Every release needs its `vX.Y.Z` tag, the zip from `Scripts/build-release.sh` attached, and a `Commands.version` that matches the tag, or the app refuses the update.
 - The app has no automated UI tests. Verify visual changes by running `./Scripts/build-app.sh` and opening the app.
 - Inspection runs tools with `--version` and `--help` and does network requests (Homebrew metadata, tldr pages). It only runs for a selected tool, never during a scan.
+- `capabilities` is the standard command every one of Flavio's CLIs implements (spec in the `agent-ready-cli` skill). `clitools` only runs `<tool> capabilities --json` on tools whose help lists that command (`ToolCapabilities.isAdvertised`), or that answered it before. Never probe other tools with it: `claude capabilities` would start an agent session, and `code capabilities` would open a file.
+- `clitools capabilities` describes clitools itself from `Commands.manifest`. Add a changelog entry there for every release, newest first, next to the `Commands.version` bump.
 - Never write shell history contents to the catalog.
 - Resolve tool names through `Catalog.tool(matching:)` / `lookup(_:)`. It matches IDs, names, command names, and package names, and produces the "did you mean" and ambiguity errors.
 - CLI hints and footers go through `Output.hint`, which prints only on a terminal. Keep piped and `--json` output free of them.

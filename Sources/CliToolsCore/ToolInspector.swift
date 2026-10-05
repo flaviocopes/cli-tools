@@ -6,19 +6,22 @@ public struct ToolInspection: Sendable {
   public var summary: String?
   public var homepage: URL?
   public var examples: [ToolExample]?
+  public var capabilities: ToolCapabilities?
 
   public init(
     version: String? = nil,
     help: String? = nil,
     summary: String? = nil,
     homepage: URL? = nil,
-    examples: [ToolExample]? = nil
+    examples: [ToolExample]? = nil,
+    capabilities: ToolCapabilities? = nil
   ) {
     self.version = version
     self.help = help
     self.summary = summary
     self.homepage = homepage
     self.examples = examples
+    self.capabilities = capabilities
   }
 }
 
@@ -39,8 +42,17 @@ public actor ToolInspector {
       inspection.help = run(tool.resolvedPath, arguments: ["-h"])
     }
 
+    if let help = inspection.help,
+      ToolCapabilities.isAdvertised(in: help, commandNames: tool.commandNames),
+      let manifest = capabilities(of: tool)
+    {
+      inspection.capabilities = manifest
+      inspection.summary = manifest.summary
+      inspection.version = inspection.version ?? manifest.version.map { "\(manifest.name) \($0)" }
+    }
+
     if tool.source == .homebrew, let metadata = homebrewMetadata(for: tool) {
-      inspection.summary = metadata.summary
+      inspection.summary = inspection.summary ?? metadata.summary
       inspection.homepage = metadata.homepage
       inspection.version = inspection.version ?? metadata.version
     }
@@ -64,6 +76,13 @@ public actor ToolInspector {
     }
 
     return inspection
+  }
+
+  /// Runs `<tool> capabilities --json`. Only call it for tools that advertise the command,
+  /// or that answered it before.
+  public func capabilities(of tool: CLITool) -> ToolCapabilities? {
+    run(tool.resolvedPath, arguments: ["capabilities", "--json"], timeout: 5, includeStandardError: false)
+      .flatMap(ToolCapabilities.parse)
   }
 
   private func tldrPage(for name: String) async -> TLDRPage? {
@@ -97,7 +116,8 @@ public actor ToolInspector {
   private func run(
     _ executable: String,
     arguments: [String],
-    timeout: TimeInterval = 2
+    timeout: TimeInterval = 2,
+    includeStandardError: Bool = true
   ) -> String? {
     guard FileManager.default.isExecutableFile(atPath: executable) else {
       return nil
@@ -123,7 +143,7 @@ public actor ToolInspector {
       ["NO_COLOR": "1", "TERM": "dumb"]
     ) { _, new in new }
     process.standardOutput = output
-    process.standardError = output
+    process.standardError = includeStandardError ? output : FileHandle.nullDevice
 
     let finished = DispatchSemaphore(value: 0)
     process.terminationHandler = { _ in finished.signal() }

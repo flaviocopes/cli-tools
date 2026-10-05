@@ -28,6 +28,7 @@ public struct ToolDiscovery: Sendable {
     var applicationCommands: [String: [URL]] = [:]
     var runtimeCommands: [String: [URL]] = [:]
     var names = Set<String>()
+    let resolvedHome = homeDirectory.resolvingSymlinksInPath().path + "/"
     var tools = npmTools(at: date)
     names.formUnion(tools.flatMap(\.commandNames))
 
@@ -71,7 +72,8 @@ public struct ToolDiscovery: Sendable {
           continue
         }
 
-        if isHomebrewDirectory(directory) {
+        let isLinkFromHome = isHomebrewDirectory(directory) && resolved.path.hasPrefix(resolvedHome)
+        if isHomebrewDirectory(directory) && !isLinkFromHome {
           if homebrew.casks.contains(name) {
             homebrewCommands[name, default: []].append(entry)
           }
@@ -93,7 +95,7 @@ public struct ToolDiscovery: Sendable {
             name: name,
             path: entry.path,
             resolvedPath: resolved.path,
-            source: source(for: entry, resolved: resolved),
+            source: isLinkFromHome ? .local : source(for: entry, resolved: resolved),
             installedAt: installationDate(for: entry, resolved: resolved),
             firstSeenAt: date,
             lastSeenAt: date

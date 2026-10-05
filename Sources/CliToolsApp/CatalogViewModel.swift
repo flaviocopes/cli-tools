@@ -232,7 +232,8 @@ final class CatalogViewModel {
         help: inspection.help,
         summary: inspection.summary,
         homepage: inspection.homepage,
-        examples: inspection.examples
+        examples: inspection.examples,
+        capabilities: inspection.capabilities
       )
     } catch {
       errorMessage = error.localizedDescription

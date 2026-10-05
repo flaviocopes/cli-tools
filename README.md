@@ -166,6 +166,47 @@ clitools stats
 
 Every command accepts `--help`, and most accept `--json`. Hints and footers only show up in a terminal, so piped output stays clean.
 
+## Ask your tools what they can do
+
+A tool can describe itself with a `capabilities` command: a short summary, a list of things it can do with the command for each, and the changes in every version. `clitools` has one too:
+
+```bash
+clitools capabilities
+clitools capabilities --json
+```
+
+Ask another tool through `clitools`, and it saves the answer in the catalog:
+
+```bash
+clitools capabilities postdeck
+```
+
+To keep `clitools` from running a tool with arguments it doesn't understand, it only asks tools whose `--help` lists a `capabilities` command. Once a tool has answered, `clitools` asks it again whenever you want a fresh answer.
+
+This is the command for AI agents. It lists what every tool that answered can do, in one call, so an agent can pick the right tool for a task:
+
+```bash
+clitools capabilities --all --json
+```
+
+`clitools search` also matches capabilities, so `clitools search slideshow` finds a tool that lists "Add a post from X as a slide".
+
+The `--json` output looks like this. `command` and `date` are optional:
+
+```json
+{
+  "name": "postdeck",
+  "version": "1.1.0",
+  "summary": "Builds slideshows in the Postdeck app from posts on X, text slides and images.",
+  "capabilities": [
+    { "description": "Add a post from X as a slide", "command": "postdeck add-post Launch --file post.json" }
+  ],
+  "changelog": [
+    { "version": "1.1.0", "date": "2026-10-05", "changes": ["Added the capabilities command"] }
+  ]
+}
+```
+
 ## Catalog location
 
 The app and CLI share this file:

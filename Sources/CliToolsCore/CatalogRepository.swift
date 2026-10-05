@@ -144,7 +144,8 @@ public actor CatalogRepository {
     help: String?,
     summary: String? = nil,
     homepage: URL? = nil,
-    examples: [ToolExample]? = nil
+    examples: [ToolExample]? = nil,
+    capabilities: ToolCapabilities? = nil
   ) throws -> Catalog {
     try update(identifier) {
       let previous = $0.version.flatMap { ToolInspector.isPlausibleVersion($0) ? $0 : nil }
@@ -153,7 +154,35 @@ public actor CatalogRepository {
       $0.summary = summary ?? $0.summary
       $0.homepage = homepage ?? $0.homepage
       $0.examples = examples ?? $0.examples
+      $0.capabilities = capabilities ?? $0.capabilities
     }
+  }
+
+  /// Saves freshly fetched capabilities, keyed by tool ID, in one write.
+  @discardableResult
+  public func updateCapabilities(_ manifests: [String: ToolCapabilities]) throws -> Catalog {
+    var catalog = try load()
+    for index in catalog.tools.indices {
+      if let manifest = manifests[catalog.tools[index].id] {
+        catalog.tools[index].capabilities = manifest
+        catalog.tools[index].summary = manifest.summary ?? catalog.tools[index].summary
+      }
+    }
+    try save(catalog)
+    return catalog
+  }
+
+  /// Asks again every installed tool that answered `capabilities` before, saves the answers,
+  /// and returns those tools by name. A tool that doesn't answer this time keeps its last answer.
+  public func refreshCapabilities(using inspector: ToolInspector = ToolInspector()) async throws -> [CLITool] {
+    let tools = try load().tools.filter { $0.capabilities != nil && $0.isAvailable && !$0.isArchived }
+    var manifests: [String: ToolCapabilities] = [:]
+    for tool in tools {
+      manifests[tool.id] = await inspector.capabilities(of: tool)
+    }
+
+    let ids = Set(tools.map(\.id))
+    return try updateCapabilities(manifests.compactMapValues { $0 }).tools.filter { ids.contains($0.id) }
   }
 
   private func update(
