@@ -3,6 +3,7 @@ import SwiftUI
 
 struct ToolListView: View {
   @Environment(CatalogViewModel.self) private var model
+  @State private var isCompact = false
 
   var body: some View {
     @Bindable var model = model
@@ -12,7 +13,7 @@ struct ToolListView: View {
 
       List(selection: $model.selection) {
         ForEach(model.visibleTools) { tool in
-          ToolRow(tool: tool, isSelected: model.selection == tool.id)
+          ToolRow(tool: tool, isSelected: model.selection == tool.id, isCompact: isCompact)
             .tag(tool.id)
             .listRowSeparator(.hidden)
             .contextMenu {
@@ -28,6 +29,7 @@ struct ToolListView: View {
       }
       .listStyle(.inset)
       .scrollContentBackground(.hidden)
+      .onGeometryChange(for: Bool.self) { $0.size.width < 380 } action: { isCompact = $0 }
       .overlay {
         if model.visibleTools.isEmpty && !model.isScanning {
           ContentUnavailableView {
@@ -69,20 +71,9 @@ private struct ListHeader: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 14) {
-      HStack(alignment: .firstTextBaseline, spacing: 10) {
-        Image(systemName: model.section.icon)
-          .font(.title2)
-          .foregroundStyle(model.section.tint)
-
-        Text(model.section.rawValue)
-          .font(.system(size: 28, weight: .bold))
-
-        Spacer()
-
-        Text("\(model.visibleTools.count) tools")
-          .font(.callout)
-          .monospacedDigit()
-          .foregroundStyle(.secondary)
+      ViewThatFits(in: .horizontal) {
+        title(showsCount: true)
+        title(showsCount: false)
       }
 
       if model.availableSources.count > 1 {
@@ -92,6 +83,29 @@ private struct ListHeader: View {
     .padding(.horizontal, 24)
     .padding(.top, 16)
     .padding(.bottom, 10)
+  }
+
+  private func title(showsCount: Bool) -> some View {
+    HStack(alignment: .firstTextBaseline, spacing: 10) {
+      Image(systemName: model.section.icon)
+        .font(.title2)
+        .foregroundStyle(model.section.tint)
+
+      Text(model.section.rawValue)
+        .font(.system(size: 28, weight: .bold))
+        .lineLimit(1)
+        .minimumScaleFactor(0.6)
+
+      Spacer(minLength: 0)
+
+      if showsCount {
+        Text("\(model.visibleTools.count) tools")
+          .font(.callout)
+          .monospacedDigit()
+          .foregroundStyle(.secondary)
+          .fixedSize()
+      }
+    }
   }
 }
 
@@ -170,48 +184,59 @@ private struct FilterChip: View {
 private struct ToolRow: View {
   let tool: CLITool
   let isSelected: Bool
+  let isCompact: Bool
 
   var body: some View {
     HStack(spacing: 12) {
       ToolIcon(tool: tool)
 
-      VStack(alignment: .leading, spacing: 2) {
-        HStack(spacing: 6) {
-          Text(tool.name)
-            .font(.system(.body, design: .monospaced, weight: .semibold))
+      if isCompact {
+        name
+        Spacer(minLength: 0)
+      } else {
+        VStack(alignment: .leading, spacing: 2) {
+          name
 
-          if tool.isFavorite {
-            Image(systemName: "star.fill")
-              .font(.caption2)
-              .foregroundStyle(.yellow)
-          }
-
-          if !tool.isAvailable {
-            Image(systemName: "exclamationmark.triangle.fill")
-              .font(.caption2)
-              .foregroundStyle(.orange)
-          }
+          Text(tool.subtitle)
+            .font(.callout)
+            .foregroundStyle(.secondary)
+            .lineLimit(1)
         }
 
-        Text(tool.subtitle)
-          .font(.callout)
-          .foregroundStyle(.secondary)
-          .lineLimit(1)
-      }
+        Spacer(minLength: 12)
 
-      Spacer(minLength: 12)
+        SourceBadge(source: tool.source, isOnSelection: isSelected)
 
-      SourceBadge(source: tool.source, isOnSelection: isSelected)
-
-      if let installedAt = tool.installedAt {
-        Text(installedAt, format: .relative(presentation: .named))
-          .font(.caption)
-          .foregroundStyle(.tertiary)
-          .frame(width: 88, alignment: .trailing)
-          .lineLimit(1)
+        if let installedAt = tool.installedAt {
+          Text(installedAt, format: .relative(presentation: .named))
+            .font(.caption)
+            .foregroundStyle(.tertiary)
+            .frame(width: 88, alignment: .trailing)
+            .lineLimit(1)
+        }
       }
     }
     .padding(.vertical, 5)
     .padding(.horizontal, 4)
+  }
+
+  private var name: some View {
+    HStack(spacing: 6) {
+      Text(tool.name)
+        .font(.system(.body, design: .monospaced, weight: .semibold))
+        .lineLimit(1)
+
+      if tool.isFavorite {
+        Image(systemName: "star.fill")
+          .font(.caption2)
+          .foregroundStyle(.yellow)
+      }
+
+      if !tool.isAvailable {
+        Image(systemName: "exclamationmark.triangle.fill")
+          .font(.caption2)
+          .foregroundStyle(.orange)
+      }
+    }
   }
 }
