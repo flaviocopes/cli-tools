@@ -2,7 +2,7 @@
 
 CLI Tools gives you one catalog for every command-line tool on your Mac.
 
-The native app finds packages you explicitly installed with Homebrew, npm, and Cargo. It also scans trusted user command directories. Package commands stay grouped, so one package does not flood the catalog with helper executables.
+The native app finds packages you explicitly installed with Homebrew, npm, and Cargo. It also finds the commands you installed by hand, in `~/bin`, `~/.local/bin`, and every folder your shell adds to your `PATH`. Package commands stay grouped, so one package does not flood the catalog with helper executables.
 
 The companion CLI reads the same catalog. AI agents can use its JSON output to discover the tools available on your system.
 
@@ -14,7 +14,7 @@ Read the announcement and watch the 30-second demo on my blog: [I launched CLI T
 
 ## Download
 
-Get `CLI-Tools-1.3.0.zip` from the [latest release](https://github.com/flaviocopes/cli-tools/releases/latest), unzip it, and drag CLI Tools to your Applications folder. It runs on macOS 14 Sonoma or later, on Apple silicon and Intel Macs.
+Get `CLI-Tools-1.4.0.zip` from the [latest release](https://github.com/flaviocopes/cli-tools/releases/latest), unzip it, and drag CLI Tools to your Applications folder. It runs on macOS 14 Sonoma or later, on Apple silicon and Intel Macs.
 
 ### Opening it the first time
 

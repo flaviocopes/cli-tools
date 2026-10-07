@@ -3,10 +3,13 @@ import SwiftUI
 
 @main
 struct CliToolsDesktopApp: App {
-  @State private var model = CatalogViewModel()
+  @State private var model: CatalogViewModel
   @Environment(\.scenePhase) private var scenePhase
 
   init() {
+    LoginShell.adoptPath()
+    // The model's ToolDiscovery copies PATH when it's created, so it has to come after adoptPath.
+    _model = State(initialValue: CatalogViewModel())
     AppUpdater.shared.start(repository: "flaviocopes/cli-tools")
   }
 

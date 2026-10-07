@@ -162,6 +162,7 @@ public struct ToolDiscovery: Sendable {
       URL(fileURLWithPath: "/usr/local/bin", isDirectory: true),
       URL(fileURLWithPath: "/usr/local/sbin", isDirectory: true),
       homeDirectory.appending(path: ".cargo/bin", directoryHint: .isDirectory),
+      homeDirectory.appending(path: "bin", directoryHint: .isDirectory),
       homeDirectory.appending(path: ".local/bin", directoryHint: .isDirectory),
       homeDirectory.appending(path: ".local/share/pnpm", directoryHint: .isDirectory),
       homeDirectory.appending(path: "Library/pnpm", directoryHint: .isDirectory),

@@ -2,7 +2,7 @@ import CliToolsCore
 import Foundation
 
 enum Commands {
-  static let version = "1.3.0"
+  static let version = "1.4.0"
 
   /// What `clitools capabilities` prints. Add a changelog entry for every release, newest first.
   static let manifest = ToolCapabilities(
@@ -20,6 +20,10 @@ enum Commands {
       .init("Rescan the Mac and report the tools that appeared or disappeared", command: "clitools scan")
     ],
     changelog: [
+      .init(version: "1.4.0", date: "2026-10-07", changes: [
+        "Finds the commands you put in ~/bin by hand, even when ~/bin isn't on your PATH.",
+        "The app reads your login shell's PATH when it starts, so it finds the same tools as the CLI. Before, it missed every folder your shell config adds to PATH."
+      ]),
       .init(version: "1.3.0", date: "2026-10-05", changes: [
         "The app's tool list shows only each tool's name when the window is narrow. The CLI didn't change."
       ]),

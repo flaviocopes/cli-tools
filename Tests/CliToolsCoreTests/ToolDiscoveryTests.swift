@@ -32,6 +32,31 @@ struct ToolDiscoveryTests {
   }
 
   @Test
+  func discoversExecutableInHomeBinOffPath() throws {
+    let root = FileManager.default.temporaryDirectory
+      .appending(path: UUID().uuidString, directoryHint: .isDirectory)
+    let bin = root.appending(path: "bin", directoryHint: .isDirectory)
+    let executable = bin.appending(path: "deploy-site")
+
+    try FileManager.default.createDirectory(at: bin, withIntermediateDirectories: true)
+    try Data("#!/bin/sh\n".utf8).write(to: executable)
+    try FileManager.default.setAttributes(
+      [.posixPermissions: 0o755],
+      ofItemAtPath: executable.path
+    )
+    defer { try? FileManager.default.removeItem(at: root) }
+
+    let tools = ToolDiscovery(
+      environment: ["PATH": "/usr/bin:/bin:/usr/sbin:/sbin"],
+      homeDirectory: root,
+      includePackageManagers: false
+    ).scan()
+    let tool = try #require(tools.first { $0.name == "deploy-site" })
+
+    #expect(tool.path.hasSuffix("/bin/deploy-site"))
+  }
+
+  @Test
   func keepsUserStateAcrossScans() async throws {
     let root = FileManager.default.temporaryDirectory
       .appending(path: UUID().uuidString, directoryHint: .isDirectory)
