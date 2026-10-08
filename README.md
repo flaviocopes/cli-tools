@@ -197,12 +197,12 @@ The `--json` output looks like this. `command` and `date` are optional:
 {
   "name": "postdeck",
   "version": "1.0.0",
-  "summary": "Builds slideshows in the Postdeck app from posts on X, text slides and images.",
+  "summary": "Builds slideshows in the Post Slide Deck app from posts on X, text slides and images.",
   "capabilities": [
     { "description": "Add a post from X as a slide", "command": "postdeck add-post \"This week's apps\" post.json" }
   ],
   "changelog": [
-    { "version": "1.0.0", "date": "2026-10-03", "changes": ["First release: Postdeck app and Chrome extension turn X posts into slideshow slides."] }
+    { "version": "1.0.0", "date": "2026-10-03", "changes": ["First release: Post Slide Deck app and Chrome extension turn X posts into slideshow slides."] }
   ]
 }
 ```
