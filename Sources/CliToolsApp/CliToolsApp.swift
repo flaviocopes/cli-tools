@@ -10,11 +10,11 @@ struct CliToolsDesktopApp: App {
     LoginShell.adoptPath()
     // The model's ToolDiscovery copies PATH when it's created, so it has to come after adoptPath.
     _model = State(initialValue: CatalogViewModel())
-    AppUpdater.shared.start(repository: "flaviocopes/cli-tools")
+    AppUpdater.shared.start(repository: "flaviocopes/cli-tools-cabinet")
   }
 
   var body: some Scene {
-    WindowGroup("CLI Tools") {
+    WindowGroup("CLI Tools Cabinet") {
       CatalogView()
         .environment(model)
         .frame(minWidth: 960, minHeight: 560)
@@ -63,7 +63,7 @@ struct CatalogView: View {
         }
     }
     .alert(
-      "CLI Tools",
+      "CLI Tools Cabinet",
       isPresented: Binding(
         get: { model.errorMessage != nil },
         set: { if !$0 { model.errorMessage = nil } }

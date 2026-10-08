@@ -1,30 +1,30 @@
-# CLI Tools
+# CLI Tools Cabinet
 
-CLI Tools gives you one catalog for every command-line tool on your Mac.
+CLI Tools Cabinet gives you one catalog for every command-line tool on your Mac.
 
 The native app finds packages you explicitly installed with Homebrew, npm, and Cargo. It also finds the commands you installed by hand, in `~/bin`, `~/.local/bin`, and every folder your shell adds to your `PATH`. Package commands stay grouped, so one package does not flood the catalog with helper executables.
 
 The companion CLI reads the same catalog. AI agents can use its JSON output to discover the tools available on your system.
 
-Read the announcement and watch the 30-second demo on my blog: [I launched CLI Tools](https://flaviocopes.com/cli-tools/).
+Read the announcement and watch the 30-second demo on my blog: [I launched CLI Tools Cabinet](https://flaviocopes.com/cli-tools-cabinet/).
 
-[![Watch the 30-second CLI Tools demo](docs/showreel-poster.jpg)](https://flaviocopes.com/cli-tools/)
+[![Watch the 30-second CLI Tools Cabinet demo](docs/showreel-poster.jpg)](https://flaviocopes.com/cli-tools-cabinet/)
 
-![CLI Tools showing every command-line tool found on my Mac](docs/all-tools.png)
+![CLI Tools Cabinet showing every command-line tool found on my Mac](docs/all-tools.png)
 
 ## Download
 
-Get `CLI-Tools-1.4.0.zip` from the [latest release](https://github.com/flaviocopes/cli-tools/releases/latest), unzip it, and drag CLI Tools to your Applications folder. It runs on macOS 14 Sonoma or later, on Apple silicon and Intel Macs.
+Get `CLI-Tools-Cabinet-1.5.0.zip` from the [latest release](https://github.com/flaviocopes/cli-tools-cabinet/releases/latest), unzip it, and drag CLI Tools Cabinet to your Applications folder. It runs on macOS 14 Sonoma or later, on Apple silicon and Intel Macs.
 
 ### Opening it the first time
 
-CLI Tools is signed with my Apple Developer ID and notarized by Apple. The first time you open it, macOS asks if you're sure you want to open an app downloaded from the internet. Click **Open**.
+CLI Tools Cabinet is signed with my Apple Developer ID and notarized by Apple. The first time you open it, macOS asks if you're sure you want to open an app downloaded from the internet. Click **Open**.
 
-On a work laptop you might not be able to install apps in `/Applications`. You can keep CLI Tools in the `Applications` folder inside your home folder instead.
+On a work laptop you might not be able to install apps in `/Applications`. You can keep CLI Tools Cabinet in the `Applications` folder inside your home folder instead.
 
 ### Updates
 
-Once a day, CLI Tools asks GitHub whether there's a newer version. When there is, it shows what's new, and **Install and Relaunch** puts it in place of the old one. **CLI Tools → Check for Updates…** checks right away.
+Once a day, CLI Tools Cabinet asks GitHub whether there's a newer version. When there is, it shows what's new, and **Install and Relaunch** puts it in place of the old one. **CLI Tools Cabinet → Check for Updates…** checks right away.
 
 To turn off the daily check, run this in Terminal:
 
@@ -42,12 +42,12 @@ Build the macOS app bundle:
 ./Scripts/build-app.sh
 ```
 
-The script builds `dist/CLI Tools.app` for Apple silicon and Intel. It signs the app with my Developer ID when that certificate is in the keychain, and ad hoc everywhere else, so your copy is signed ad hoc. Drag it to your Applications folder.
+The script builds `dist/CLI Tools Cabinet.app` for Apple silicon and Intel. It signs the app with my Developer ID when that certificate is in the keychain, and ad hoc everywhere else, so your copy is signed ad hoc. Drag it to your Applications folder.
 
 Then open it:
 
 ```bash
-open "dist/CLI Tools.app"
+open "dist/CLI Tools Cabinet.app"
 ```
 
 You can also run the development build:
@@ -60,7 +60,7 @@ swift run CliToolsApp
 
 Select a tool and the detail pane shows two kinds of history.
 
-![CLI Tools showing my shell history and the agent history for amp](docs/tool-history.png)
+![CLI Tools Cabinet showing my shell history and the agent history for amp](docs/tool-history.png)
 
 **Your History** comes from your shell history (zsh, bash, and fish). It loads with the catalog and groups the commands that ran the tool, most recent first, with a run count and the last time you used it.
 

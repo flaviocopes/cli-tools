@@ -1,12 +1,12 @@
 #!/bin/sh
-# Builds a universal (Apple silicon and Intel) dist/CLI Tools.app.
+# Builds a universal (Apple silicon and Intel) dist/CLI Tools Cabinet.app.
 # Signs with Flavio's Developer ID when the certificate is in the keychain, and ad-hoc everywhere else (CI, forks).
 # The version comes from Commands.version in Sources/CliToolsCLI/Commands.swift.
 
 set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
-APP="$ROOT/dist/CLI Tools.app"
+APP="$ROOT/dist/CLI Tools Cabinet.app"
 CONTENTS="$APP/Contents"
 MACOS="$CONTENTS/MacOS"
 RESOURCES="$CONTENTS/Resources"
@@ -19,7 +19,7 @@ swift build -c release --arch arm64 --arch x86_64 --product CliToolsApp
 
 rm -rf "$APP"
 mkdir -p "$MACOS" "$RESOURCES"
-cp ".build/apple/Products/Release/CliToolsApp" "$MACOS/CLI Tools"
+cp ".build/apple/Products/Release/CliToolsApp" "$MACOS/CLI Tools Cabinet"
 
 rm -rf "$ICONSET"
 mkdir -p "$ICONSET"
@@ -43,9 +43,9 @@ cat > "$CONTENTS/Info.plist" <<PLIST
   <key>CFBundleDevelopmentRegion</key>
   <string>en</string>
   <key>CFBundleDisplayName</key>
-  <string>CLI Tools</string>
+  <string>CLI Tools Cabinet</string>
   <key>CFBundleExecutable</key>
-  <string>CLI Tools</string>
+  <string>CLI Tools Cabinet</string>
   <key>CFBundleIdentifier</key>
   <string>com.flaviocopes.clitools</string>
   <key>CFBundleIconFile</key>
@@ -53,7 +53,7 @@ cat > "$CONTENTS/Info.plist" <<PLIST
   <key>CFBundleInfoDictionaryVersion</key>
   <string>6.0</string>
   <key>CFBundleName</key>
-  <string>CLI Tools</string>
+  <string>CLI Tools Cabinet</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleShortVersionString</key>
@@ -86,5 +86,5 @@ else
   codesign --verify --deep --strict "$APP"
 fi
 
-echo "Built $APP $VERSION for $(lipo -archs "$MACOS/CLI Tools"), $SIGNATURE signed"
+echo "Built $APP $VERSION for $(lipo -archs "$MACOS/CLI Tools Cabinet"), $SIGNATURE signed"
 echo "$APP"

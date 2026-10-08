@@ -1,4 +1,4 @@
-# CLI Tools
+# CLI Tools Cabinet
 
 A Swift package with three targets. No Xcode project, no external dependencies.
 
@@ -16,9 +16,9 @@ swift build              # build every target (debug)
 swift test               # run the tests, must pass before committing
 swift run clitools list  # run the CLI from source
 swift run CliToolsApp    # run the app from source
-./Scripts/build-app.sh   # universal release build, produces dist/CLI Tools.app (Developer ID when the certificate is in the keychain, ad-hoc otherwise)
-./Scripts/build-release.sh # builds, notarizes when Developer ID signed, staples, and writes dist/CLI-Tools-<version>.zip
-open "dist/CLI Tools.app"
+./Scripts/build-app.sh   # universal release build, produces dist/CLI Tools Cabinet.app (Developer ID when the certificate is in the keychain, ad-hoc otherwise)
+./Scripts/build-release.sh # builds, notarizes when Developer ID signed, staples, and writes dist/CLI-Tools-Cabinet-<version>.zip
+open "dist/CLI Tools Cabinet.app"
 ./Scripts/install-cli.sh # release build of clitools, symlinked into ~/.local/bin (or the dir passed as $1)
 ```
 
@@ -45,7 +45,7 @@ Build output goes to `.build/`, the app bundle to `dist/`. Both are ignored by g
 - Favor a modern, sleek macOS interface inspired by Things without copying its design.
 - When a filtered section excludes the current selection, show the detail pane's empty state instead of stale tool details.
 - Scan AI agent transcripts for a tool's runs only on demand (the "Find agent runs" button or `clitools history --agents`), never automatically when a tool opens.
-- Add new screenshots to both the README and the flaviocopes.com post about CLI Tools.
+- Add new screenshots to both the README and the flaviocopes.com post about CLI Tools Cabinet.
 
 ## Learned Workspace Facts
 - This project provides both a native macOS SwiftUI desktop app and a `clitools` command-line interface for discovering and managing installed CLI tools.
@@ -55,5 +55,11 @@ Build output goes to `.build/`, the app bundle to `dist/`. Both are ignored by g
 - Homebrew discovery reads local installation receipts because aggregate Homebrew metadata can omit tapped formulas.
 - The persisted catalog lives at `~/Library/Application Support/CliTools/catalog.json`.
 - The app icon source is `Assets/AppIcon.png`; `Scripts/build-app.sh` turns it into `AppIcon.icns` inside the bundle.
-- README images live in `docs/`; the companion blog post is `~/www/flaviocopes.com/src/posts/cli-tools.md`, with images in `public/images/cli-tools/`.
-- The demo video is hosted on flaviocopes.com (`public/images/cli-tools/demo.mp4`, embedded in `src/posts/cli-tools.md`), not in this repo; the README's `docs/showreel-poster.jpg` links to that post. The video comes from the separate Remotion project `~/dev/cli-tools-showreel`, where `npm run build` renders `out/cli-tools-showreel.mp4`.
+- README images live in `docs/`; the companion blog post is `~/www/flaviocopes.com/src/posts/cli-tools-cabinet.md`, with images in `public/images/cli-tools-cabinet/`.
+- The demo video is hosted on flaviocopes.com (`public/images/cli-tools-cabinet/demo.mp4`, embedded in `src/posts/cli-tools-cabinet.md`), not in this repo; the README's `docs/showreel-poster.jpg` links to that post. The video comes from the separate Remotion project `~/dev/cli-tools-cabinet-showreel`, where `npm run build` renders `out/cli-tools-cabinet-showreel.mp4`.
+
+`Scripts/screenshot.sh` builds a screenshot app with generated tools. Run it in the test VM with an output folder to capture both appearances without reading a real catalog.
+
+## Naming compatibility
+
+The public app name is CLI Tools Cabinet. Keep its existing bundle ID, saved data paths, URL schemes, CLI commands and internal Swift targets so installed copies and agent integrations remain compatible. Use the renamed checkout folder and GitHub repository in new links and build instructions.

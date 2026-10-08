@@ -1,6 +1,6 @@
 #!/bin/sh
 # Builds the universal app, notarizes when signed with the Developer ID, staples the ticket,
-# checks the signature survives zipping, and writes dist/CLI-Tools-<version>.zip for a GitHub release.
+# checks the signature survives zipping, and writes dist/CLI-Tools-Cabinet-<version>.zip for a GitHub release.
 # Needs the Developer ID certificate in the keychain and a notarytool profile named "notary":
 #   xcrun notarytool store-credentials notary --apple-id <apple id> --team-id DGFKNTAG99
 # Usage: ./Scripts/build-release.sh
@@ -9,8 +9,8 @@ set -eu
 ROOT=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
 cd "$ROOT"
 VERSION=$(sed -n 's/^ *static let version = "\(.*\)"$/\1/p' Sources/CliToolsCLI/Commands.swift)
-APP="$ROOT/dist/CLI Tools.app"
-ZIP="$ROOT/dist/CLI-Tools-$VERSION.zip"
+APP="$ROOT/dist/CLI Tools Cabinet.app"
+ZIP="$ROOT/dist/CLI-Tools-Cabinet-$VERSION.zip"
 CHECK=$(mktemp -d)
 
 rm -f "$ZIP"
@@ -23,7 +23,7 @@ else
   SIGNATURE="ad-hoc"
 fi
 
-lipo "$APP/Contents/MacOS/CLI Tools" -verify_arch arm64 x86_64
+lipo "$APP/Contents/MacOS/CLI Tools Cabinet" -verify_arch arm64 x86_64
 if [ "$SIGNATURE" = "Developer ID" ]; then
   codesign --verify --strict "$APP"
 else
@@ -35,9 +35,9 @@ verify_zip() {
   ditto -c -k --sequesterRsrc --keepParent "$APP" "$zip_path"
   ditto -x -k "$zip_path" "$CHECK"
   if [ "$SIGNATURE" = "Developer ID" ]; then
-    codesign --verify --strict "$CHECK/CLI Tools.app"
+    codesign --verify --strict "$CHECK/CLI Tools Cabinet.app"
   else
-    codesign --verify --deep --strict "$CHECK/CLI Tools.app"
+    codesign --verify --deep --strict "$CHECK/CLI Tools Cabinet.app"
   fi
   rm -rf "$CHECK"/*
 }
@@ -62,7 +62,7 @@ if [ "$SIGNATURE" = "Developer ID" ]; then
 else
   ditto -c -k --keepParent "$APP" "$ZIP"
   ditto -x -k "$ZIP" "$CHECK"
-  codesign --verify --deep --strict "$CHECK/CLI Tools.app"
+  codesign --verify --deep --strict "$CHECK/CLI Tools Cabinet.app"
   rm -rf "$CHECK"
   echo "$ZIP ($SIGNATURE signed)"
 fi
